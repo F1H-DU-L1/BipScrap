@@ -9,15 +9,67 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+<<<<<<< HEAD
+=======
+from selenium.webdriver.chrome.service import Service
+
+import json
+import pika
+from dotenv import load_dotenv
+import schedule
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
 
 # Konfiguracja Selenium
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # Tryb bez GUI
+<<<<<<< HEAD
 driver = webdriver.Chrome(options=chrome_options)
+=======
+chrome_options.add_argument("--no-sandbox")  # Ważne dla kontenerów
+chrome_options.add_argument("--disable-dev-shm-usage")  # Zapobiega problemom z pamięcią
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--remote-debugging-port=9222")
+
+# Ustawienie ścieżki do ChromeDriver
+service = Service("/usr/local/bin/chromedriver")
+driver = webdriver.Chrome(service=service, options=chrome_options)
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
 
 VISITED = set()
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+<<<<<<< HEAD
+=======
+load_dotenv(override=True)
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
+RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE")
+RABBITMQ_USER = os.getenv("RABBITMQ_USER")
+RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
+
+def send_to_rabbitmq(url, text):
+    """Wysyła url i wyczyszczoną zawartość do kolejki rabbitmq"""
+    # Connect
+    credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, credentials=credentials))
+    channel = connection.channel()
+
+    # Queue declare
+    channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
+
+    # Prepare message
+    message = json.dumps({"url": url, "text": text})
+
+    # Send to queue
+    channel.basic_publish(
+        exchange='',
+        routing_key=RABBITMQ_QUEUE,
+        body=message,
+        properties=pika.BasicProperties(delivery_mode=2)
+    )
+    print(f"[x] Wysłano do kolejki: {message}")
+    connection.close()
+
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
 def get_soup_selenium(url):
     """Pobiera stronę przy użyciu Selenium (dla JS i nie tylko)."""
     try:
@@ -131,6 +183,10 @@ def crawl(domain, base_url, max_pages_per_url = None):
             content, html_content = extract_main_content(soup, raw_html)
 
             # Zapisywanie wyników
+<<<<<<< HEAD
+=======
+            send_to_rabbitmq(url, content)
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
             writer.writerow([url, content])
             html_out.write(f"URL: {url}\n{html_content}\n\n")
             sitemap_out.write(url + "\n")
@@ -177,5 +233,16 @@ def main():
 
     driver.quit()
 
+<<<<<<< HEAD
 if __name__ == "__main__":
     main()
+=======
+# Uruchamiaj co 24 godziny
+schedule.every(24).hours.do(main)
+
+if __name__ == "__main__":
+    print("🔄 Uruchomiono moduł pobierania danych...")
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)

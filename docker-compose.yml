@@ -1,0 +1,19 @@
+---
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
+    env_file:
+      - .env
+  data_acquisition:
+    build: ./services/data_acquisition
+    container_name: data_acquisition
+    depends_on:
+      - rabbitmq
+    env_file:
+      - services/data_acquisition/.env
