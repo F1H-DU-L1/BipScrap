@@ -1,7 +1,12 @@
 *.env
 <<<<<<< HEAD
+<<<<<<< HEAD
 data/
 .idea/
 =======
 data/
 >>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
+=======
+data/
+.idea
+>>>>>>> 082cf26 (Dodanie kolejki rabbitmq)
