@@ -246,3 +246,4 @@ if __name__ == "__main__":
         schedule.run_pending()
         time.sleep(1)
 >>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
+
