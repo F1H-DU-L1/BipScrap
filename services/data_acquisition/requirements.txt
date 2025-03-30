@@ -1,9 +1,7 @@
-<<<<<<< HEAD
 beautifulsoup4==4.12.2
 requests==2.31.0
 selenium==4.11.2
 urllib3==2.0.4
-=======
 attrs==25.3.0
 beautifulsoup4==4.12.2
 certifi==2025.1.31
@@ -25,4 +23,4 @@ trio==0.29.0
 trio-websocket==0.12.2
 urllib3==2.0.4
 wsproto==1.2.0
->>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
+
