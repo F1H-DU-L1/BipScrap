@@ -12,10 +12,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Create env file
+      run: |
+        echo "RABBITMQ_USER=admin" >> services/data_acquisition/.env
+        echo "RABBITMQ_PASS=admin" >> services/data_acquisition/.env
+        echo "RABBITMQ_HOST=rabbitmq" >> services/data_acquisition/.env
+        echo "RABBITMQ_QUEUE=data_quueue" >> services/data_acquisition/.env
     - name: Build the Docker images
       run: |
         for module in services/*/; do
-          if [ -f "$module/Dockerfile" ]; then 
+          if [ -f "$module/Dockerfile" ]; then
+            
             service_name=$(basename "$module")
             echo "Building image for $service_name"
             docker build "$module" --file "$module/Dockerfile" --tag "my-image-$service_name:$(date +%s)"
@@ -31,6 +38,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Create env file
+      run: |
+        echo "RABBITMQ_DEFAULT_USER=admin" >> .env
+        echo "RABBITMQ_DEFAULT_PASS=admin" >> .env
     - name: Start services with Docker Compose
       run: docker compose up -d
     - name: Wait for services to be ready
