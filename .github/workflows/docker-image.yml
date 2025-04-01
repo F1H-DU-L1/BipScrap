@@ -15,4 +15,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: |
+        for module in $(ls -d services/*/); do
+          if [ -f "$module/Dockerfile"]; then
+            service_name=$(basename "$module")
+            echo "Building image for $service_name"
+            dokcer build "$module" --file "$module/Dockerfile" --tag "my-image-$service_name":$(date +%s)"
+          else
+            echo "Skipping $module (no Dockerfile found)"
+          fi
+        done
