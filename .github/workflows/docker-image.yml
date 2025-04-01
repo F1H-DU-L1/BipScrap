@@ -32,7 +32,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Start services with Docker Compose
-      run: docker-compose up -d
+      run: docker compose up -d
     - name: Wait for services to be ready
       run: sleep 60
     - name: Check running containers
@@ -46,4 +46,4 @@ jobs:
           docker ps
         fi
     - name: Stop services
-      run: docker-compose down
+      run: docker compose down
