@@ -7,20 +7,18 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build the Docker image
+    - name: Build the Docker images
       run: |
-        for module in $(ls -d services/*/); do
-          if [ -f "$moduleDockerfile" ]; then
+        for module in services/*/; do
+          if [ -f "$module/Dockerfile" ]; then 
             service_name=$(basename "$module")
             echo "Building image for $service_name"
-            docker build "$module" --file "$moduleDockerfile" --tag "my-image-$service_name:$(date +%s)"
+            docker build "$module" --file "$module/Dockerfile" --tag "my-image-$service_name:$(date +%s)"
           else
             echo "Skipping $module (no Dockerfile found)"
           fi
