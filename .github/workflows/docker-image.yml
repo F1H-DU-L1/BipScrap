@@ -54,7 +54,7 @@ jobs:
       run: sleep 60
     - name: Check running containers
       run: |
-        RUNNING+CONTAINERS=$(docker ps -q | wc -l)
+        RUNNING_CONTAINERS=$(docker ps -q | wc -l)
         if [ "$RUNNING_CONTAINERS" -eq 0 ]; then
           echo "ERROR: No containers are running!"
           exit 1
