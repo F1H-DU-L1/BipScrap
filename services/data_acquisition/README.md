@@ -19,10 +19,24 @@ Skrypt wymaga następujących pakietów:
 - `time`
 - `os`
 - `csv`
+<<<<<<< HEAD
 
 ## Opis funkcji
 
 ### 1. `get_soup_selenium(url)`
+=======
+- `json`
+- `pika`
+- `dotenv`
+- `schedule`
+
+## Opis funkcji
+
+### 1. `send_to_rabbitmq(url, text)`
+**Opis** Funkcja przesyła do kolejki rabbitMQ adresy URL i zawartość stron
+
+### 2. `get_soup_selenium(url)`
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
 **Opis**: Funkcja pobiera stronę internetową za pomocą Selenium, czekając na załadowanie wszystkich elementów strony, w tym tych dynamicznych ładowanych przez JavaScript. Zwraca obiekt `BeautifulSoup` oraz surowy HTML.
 
 **Wejście**:
@@ -32,7 +46,11 @@ Skrypt wymaga następujących pakietów:
 - `soup`: Obiekt `BeautifulSoup` z zawartością strony.
 - `raw_html`: Surowy HTML strony.
 
+<<<<<<< HEAD
 ### 2. `extract_main_content(soup, raw_html)`
+=======
+### 3. `extract_main_content(soup, raw_html)`
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
 **Opis**: Funkcja usuwa nagłówki, stopki, paski nawigacyjne, skrypty oraz inne zbędne elementy ze strony i jej surowego HTML-a. Zwraca oczyszczoną treść strony oraz oczyszczony HTML.
 
 **Wejście**:
@@ -43,7 +61,11 @@ Skrypt wymaga następujących pakietów:
 - `content`: Oczyszczona treść strony.
 - `cleaned_raw_html`: Oczyszczony HTML strony.
 
+<<<<<<< HEAD
 ### 3. `compute_file_hash(file_path)`
+=======
+### 4. `compute_file_hash(file_path)`
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
 **Opis**: Funkcja oblicza hash SHA-256 dla pliku wskazanego przez ścieżkę.
 
 **Wejście**:
@@ -52,7 +74,11 @@ Skrypt wymaga następujących pakietów:
 **Wyjście**:
 - `file_hash`: Hash SHA-256 pliku.
 
+<<<<<<< HEAD
 ### 4. `create_hash_report(csv_file, html_file, output_txt_file)`
+=======
+### 5. `create_hash_report(csv_file, html_file, output_txt_file)`
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
 **Opis**: Funkcja generuje raport w formacie tekstowym zawierający hashe plików CSV oraz HTML.
 
 **Wejście**:
@@ -63,7 +89,11 @@ Skrypt wymaga następujących pakietów:
 **Wyjście**:
 - Zapisuje raport hashy do pliku tekstowego.
 
+<<<<<<< HEAD
 ### 5. `crawl(domain, base_url, max_pages_per_url=None)`
+=======
+### 6. `crawl(domain, base_url, max_pages_per_url=None)`
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
 **Opis**: Funkcja do przeszukiwania domeny i zbierania danych z podstron. Funkcja pobiera strony, oczyszcza treść, zapisuje dane do plików CSV, HTML oraz mapy witryny. Działa rekurencyjnie, przetwarzając wszystkie dostępne podstrony.
 
 **Wejście**:
@@ -78,7 +108,11 @@ Skrypt wymaga następujących pakietów:
   - `sitemap.txt`: Zawiera listę przetworzonych URL.
   - `hash_file.txt`: Zawiera raport hashy dla plików CSV i HTML.
 
+<<<<<<< HEAD
 ### 6. `main()`
+=======
+### 7. `main()`
+>>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
 **Opis**: Funkcja główna uruchamiająca skrypt. Uruchamia przetwarzanie dla listy podanych URL-i.
 
 **Wejście**:
