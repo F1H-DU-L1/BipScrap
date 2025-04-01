@@ -20,7 +20,7 @@ jobs:
           if [ -f "$module/Dockerfile"]; then
             service_name=$(basename "$module")
             echo "Building image for $service_name"
-            dokcer build "$module" --file "$module/Dockerfile" --tag "my-image-$service_name":$(date +%s)"
+            dokcer build "$module" --file "$module/Dockerfile" --tag "my-image-$service_name:$(date +%s)"
           else
             echo "Skipping $module (no Dockerfile found)"
           fi
