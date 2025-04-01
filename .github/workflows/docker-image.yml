@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  dockerfiles-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,3 +23,27 @@ jobs:
             echo "Skipping $module (no Dockerfile found)"
           fi
         done
+
+  # docker-compose test
+  docker-compose-test:
+    runs-on: ubuntu-latest
+    needs: dockerfiles-test
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Start services with Docker Compose
+      run: docker-compose up -d
+    - name: Wait for services to be ready
+      run: sleep 60
+    - name: Check running containers
+      run: |
+        RUNNING+CONTAINERS=$(docker ps -q | wc -l)
+        if [ "$RUNNING_CONTAINERS" -eq 0 ]; then
+          echo "ERROR: No containers are running!"
+          exit 1
+        else 
+          echo "$RUNNING_CONTAINERS containers are running."
+          docker ps
+        fi
+    - name: Stop services
+      run: docker-compose down
