@@ -38,7 +38,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Create env file
+    - name: Createe env file for data acquisition
+      run: |
+        echo "RABBITMQ_USER=admin" >> services/data_acquisition/.env
+        echo "RABBITMQ_PASS=admin" >> services/data_acquisition/.env
+        echo "RABBITMQ_HOST=rabbitmq" >> services/data_acquisition/.env
+        echo "RABBITMQ_QUEUE=data_quueue" >> services/data_acquisition/.env
+    - name: Create env file for docker compose
       run: |
         echo "RABBITMQ_DEFAULT_USER=admin" >> .env
         echo "RABBITMQ_DEFAULT_PASS=admin" >> .env
