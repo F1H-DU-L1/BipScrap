@@ -2,6 +2,12 @@
 
 Ten skrypt służy do web scrapingu z użyciem Selenium oraz BeautifulSoup. Skrypt przeszukuje strony internetowe, zbiera treść z różnych podstron, a następnie zapisuje dane do plików CSV, HTML oraz tworzy plik TXT z adresami przetworzonych podstron. Dodatkowo, skrypt oblicza hash SHA-256 dla wygenerowanych plików i tworzy raport.
 
+## .env
+RABBITMQ_USER: ""
+RABBITMQ_PASS: ""
+RABBITMQ_HOST: ""
+RABBITMQ_QUEUE: ""
+
 ## Instalacja
 
 Upewnij się, że masz zainstalowany Python w wersji 3.6 lub wyższej. Następnie uruchom poniższe polecenie, aby zainstalować zależności:

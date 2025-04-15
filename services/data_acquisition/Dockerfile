@@ -25,24 +25,24 @@ RUN GOOGLE_CHROME_VERSION=$(google-chrome --version | awk '{print $3}') && \
     chmod +x /usr/local/bin/chromedriver
 
 # Skopiowanie skryptu wait-for-it.sh
-COPY wait-for-it.sh /wait-for-it.sh
-RUN chmod +x /wait-for-it.sh
+COPY ../../wait-for-it.sh /usr/local/bin/wait-for-it.sh
+RUN chmod +x /usr/local/bin/wait-for-it.sh
 
 # Set workdir
 WORKDIR /app
 
 # Copy requirements file
-COPY requirements.txt .
+COPY services/data_acquisition/requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app code
-COPY webscrapping.py .
+COPY services/data_acquisition/webscrapping.py .
 
 # Set environment variables
 ENV RABBITMQ_HOST=rabbitmq
 ENV RABBITMQ_QUEUE=data_queue
 
 # Run application
-CMD ["/wait-for-it.sh", "rabbitmq:5672", "--", "python", "webscrapping.py"]
+CMD ["wait-for-it.sh", "rabbitmq:5672", "--", "python", "webscrapping.py"]
