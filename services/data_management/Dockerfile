@@ -2,7 +2,7 @@
 FROM python:3.11-slim
 
 # Set environment variables so Flask runs correctly
-ENV FLASK_APP=api
+ENV FLASK_APP=api/api
 ENV FLASK_RUN_HOST=0.0.0.0
 
 # Set working directory
