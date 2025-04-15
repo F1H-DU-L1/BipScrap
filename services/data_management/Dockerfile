@@ -8,11 +8,14 @@ ENV FLASK_RUN_HOST=0.0.0.0
 # Set working directory
 WORKDIR /app
 
-# Copy project files into the container
-COPY . .
+# Copy requirements file
+COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy project files into the container
+COPY . .
 
 # Expose the port on which Flask will run
 EXPOSE 5000
