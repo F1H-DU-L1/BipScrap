@@ -1,0 +1,34 @@
+[
+    {
+        "url": "http://quotes.toscrape.com/",
+        "short_text": "Quotes to ScrapeLogin“The world as we have created it is a process of our thinking. It cannot be changed without changing our thinking.”byAlbert Einstein(about)Tags:changedeep-thoughtsthinkingworld"
+    },
+    {
+        "url": "http://quotes.toscrape.com/login",
+        "short_text": "Quotes to ScrapeLoginUsernamePassword"
+    },
+    {
+        "url": "http://quotes.toscrape.com/author/Albert-Einstein",
+        "short_text": "Quotes to ScrapeLoginAlbert EinsteinBorn:March 14, 1879in Ulm, GermanyDescription:In 1879, Albert Einstein was born in Ulm, Germany. He completed his Ph.D. at the University of Zurich"
+    },
+    {
+        "url": "http://example.com/about",
+        "short_text": "Example SiteAbout us: We are passionate developers creating meaningful digital experiences across the globe."
+    },
+    {
+        "url": "http://example.com/products/widget123",
+        "short_text": "Example SiteWidget 123 – the ultimate gadget to improve your productivity and simplify everyday tasks."
+    },
+    {
+        "url": "http://example.com/contact",
+        "short_text": "Example SiteContact us via email at support@example.com or call +1 800 123 4567. We're here to help!"
+    },
+    {
+        "url": "http://example.com/blog/ai-trends-2025",
+        "short_text": "Example BlogTop 5 AI Trends in 2025: 1. Explainable AI 2. AI in Healthcare 3. Autonomous Agents 4. Ethical AI 5. AI and IoT fusion."
+    },
+    {
+        "url": "http://example.com/careers",
+        "short_text": "Join Our TeamLooking for Backend Developers, Data Scientists, and DevOps Engineers – apply now!"
+    }
+]
