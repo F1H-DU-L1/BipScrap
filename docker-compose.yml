@@ -46,7 +46,5 @@ services:
     container_name: data_management
     depends_on:
       - rabbitmq
-    env_file:
-      - services/data_management/.env
     ports:
       - 5000:5000
