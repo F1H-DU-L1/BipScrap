@@ -10,10 +10,32 @@ services:
       - 15672:15672
     env_file:
       - .env
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    hostname: ollama
+    restart: always
+    build:
+      dockerfile: ./services/ollama/Dockerfile
+    ports:
+      - 11434:11434
+
   data_acquisition:
-    build: ./services/data_acquisition
+    build:
+      context: .
+      dockerfile: ./services/data_acquisition/Dockerfile
     container_name: data_acquisition
     depends_on:
       - rabbitmq
     env_file:
       - services/data_acquisition/.env
+  summary_llm:
+    build:
+      context: .
+      dockerfile: ./services/summary_of_content_changes/Dockerfile
+    container_name: summary_of_content_changes
+    depends_on:
+      - rabbitmq
+      - ollama
+    env_file:
+      - services/summary_of_content_changes/.env
