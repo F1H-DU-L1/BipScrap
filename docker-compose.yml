@@ -39,7 +39,16 @@ services:
       - ollama
     env_file:
       - services/summary_of_content_changes/.env
-
+      
+  data_management:
+    build:
+      context: .
+      dockerfile: ./services/data_management/Dockerfile
+    container_name: data_management
+    depends_on:
+      - rabbitmq
+    ports:
+      - 5000:5000
 
   versioning_and_change_tracking:
     build:
