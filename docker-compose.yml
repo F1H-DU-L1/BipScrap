@@ -39,3 +39,16 @@ services:
       - ollama
     env_file:
       - services/summary_of_content_changes/.env
+
+
+  versioning_and_change_tracking:
+    build:
+      context: .
+      dockerfile: ./services/versioning_and_change_tracking/Dockerfile
+    container_name: versioning_and_change_tracking
+    volumes:
+      - ./services/versioning_and_change_tracking/sample.json:/app/sample.json
+    depends_on:
+      - rabbitmq
+    env_file:
+      - services/versioning_and_change_tracking/.env
