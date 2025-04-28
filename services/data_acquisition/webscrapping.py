@@ -1,6 +1,5 @@
 import os
 import csv
-import hashlib
 import time
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
@@ -16,8 +15,13 @@ import pika
 from dotenv import load_dotenv
 import schedule
 
+import requests
+from io import BytesIO
+from docx import Document
+from PyPDF2 import PdfReader
+
 # Konfiguracja Selenium
-chrome_options = Options()
+chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--headless")  # Tryb bez GUI
 chrome_options.add_argument("--no-sandbox")  # Ważne dla kontenerów
 chrome_options.add_argument("--disable-dev-shm-usage")  # Zapobiega problemom z pamięcią
@@ -26,7 +30,17 @@ chrome_options.add_argument("--remote-debugging-port=9222")
 
 # Ustawienie ścieżki do ChromeDriver
 service = Service("/usr/local/bin/chromedriver")
-driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# Ścieżka do folderu, w którym będą zapisywane pobrane pliki
+# UWAGA - zmienić dla właściwego środowiska
+download_dir = "E:\\Studia\\Semestr 8\\Projekty\\webscrapping\\BipScrap\\services\\data_acquisition\\files"
+
+# Konfiguracja preferencji pobierania
+prefs = {'download.default_directory': download_dir }
+chrome_options.add_experimental_option('prefs', prefs)
+
+driver = webdriver.Chrome(service=service, options=chrome_options) # <- do uruchamiania w dockerze
+# driver = webdriver.Chrome(options=chrome_options) # <- do uruchamiania lokalnego
 
 VISITED = set()
 HEADERS = {"User-Agent": "Mozilla/5.0"}
@@ -37,7 +51,59 @@ RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
 
-def send_to_rabbitmq(url, text):
+import time
+import requests
+from selenium.webdriver.common.by import By
+
+def extract_text_from_file(file_url):
+    """Pobiera plik (PDF, DOCX) i wyciąga z niego tekst. Czeka 10 sekund na pobranie pliku."""
+    try:
+        # Sprawdzanie czy plik jest zapisany w folderze /files
+        filename = file_url.split("/")[-1]
+        file_path = os.path.join(download_dir, filename)
+        
+        # Poczekaj maksymalnie 10 sekund, aż plik zostanie pobrany
+        for _ in range(10):
+            if os.path.exists(file_path):
+                break
+            time.sleep(1)  # Sprawdzaj co sekundę
+
+        if os.path.exists(file_path):
+            print(f"📄 Plik pobrany: {file_path}")
+            
+            # Odczytaj zawartość pliku
+            file_ext = filename.split('.')[-1].lower()
+            text = ""
+
+            if file_ext == "pdf":
+                # Odczytywanie PDF
+                with open(file_path, "rb") as f:
+                    reader = PdfReader(f)
+                    for page in reader.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            text += page_text
+            elif file_ext == "docx":
+                # Odczytywanie DOCX
+                with open(file_path, "rb") as f:
+                    doc = Document(f)
+                    text = '\n'.join([para.text for para in doc.paragraphs])
+            else:
+                print(f"⚠️ Nieobsługiwany typ pliku: {file_ext}")
+
+            # Usuwanie pliku po przetworzeniu
+            os.remove(file_path)
+            print(f"✅ Plik {file_path} został przetworzony i usunięty.")
+            return text.strip()
+        else:
+            print(f"⚠️ Plik {file_path} nie został pobrany w ciągu 10 sekund.")
+            return None
+    except Exception as e:
+        print(f"❌ Błąd podczas pobierania lub przetwarzania pliku {file_url}: {e}")
+        return None
+
+
+def send_to_rabbitmq(scrap_id, url):
     """Wysyła url i wyczyszczoną zawartość do kolejki rabbitmq"""
     # Connect
     credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
@@ -48,7 +114,7 @@ def send_to_rabbitmq(url, text):
     channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
 
     # Prepare message
-    message = json.dumps({"url": url, "text": text})
+    message = json.dumps({"scrap_id": scrap_id, "url": url})
 
     # Send to queue
     channel.basic_publish(
@@ -77,7 +143,7 @@ def get_soup_selenium(url):
         print(f"❌ Błąd przy pobieraniu strony {url}: {e}")
         return None, None
 
-def extract_main_content(soup, raw_html):
+def extract_main_content(soup):
     """Usuwa nagłówek, stopkę, menu, head, paski nawigacyjne i inne zbędne elementy ze strony."""
 
     # Usuwamy niechciane tagi w BeautifulSoup
@@ -87,67 +153,22 @@ def extract_main_content(soup, raw_html):
     # Czyszczenie treści strony
     cleaned_content = soup.get_text(strip=True)
 
-    # Przetwarzamy surowy HTML
-    raw_soup = BeautifulSoup(raw_html, "html.parser")
+    return cleaned_content
 
-    # Usuwamy te same tagi z raw_soup
-    for tag in raw_soup.find_all(["header", "footer", "nav", "aside", "head", "script", "style"]):
-        tag.decompose()
-
-    # Zwracamy oczyszczony HTML i treść
-    cleaned_raw_html = str(raw_soup)
-    return cleaned_content, cleaned_raw_html
-
-def compute_file_hash(file_path):
-    """Oblicza hash SHA-256 zawartości pliku (bez uwzględniania nazwy pliku)."""
-    try:
-        with open(file_path, "rb") as file:
-            file_content = file.read()  # Odczytujemy zawartość pliku
-            file_hash = hashlib.sha256(file_content).hexdigest()  # Obliczamy hash
-        return file_hash
-    except Exception as e:
-        print(f"❌ Błąd przy obliczaniu hasha dla pliku {file_path}: {e}")
-        return None
-
-def create_hash_report(csv_file, html_file, output_txt_file):
-    """Tworzy plik .txt z nazwami plików i ich hashami (csv i html)."""
-    # Obliczamy hashe dla plików
-    csv_hash = compute_file_hash(csv_file)
-    html_hash = compute_file_hash(html_file)
-    
-    # Sprawdzamy, czy udało się obliczyć hashe
-    if not csv_hash or not html_hash:
-        print("❌ Nie udało się obliczyć hashy dla plików.")
-        return
-    
-    # Tworzymy plik .txt z wynikami
-    try:
-        with open(output_txt_file, "w", encoding="utf-8") as output_file:
-            output_file.write(f"Plik: {csv_file}\nHash: {csv_hash}\n\n")
-            output_file.write(f"Plik: {html_file}\nHash: {html_hash}\n")
-        print(f"✅ Zapisano raport hashy w pliku: {output_txt_file}")
-    except Exception as e:
-        print(f"❌ Błąd przy zapisywaniu raportu hashy: {e}")
-
-def crawl(domain, base_url, max_pages_per_url = None):
-    """Przeszukuje całą domenę i zbiera dane z podstron."""
+def crawl(domain, base_url, max_pages_per_url=None):
+    """Przeszukuje całą domenę i zbiera dane z podstron oraz plików PDF, DOCX."""
     queue = [base_url]
     visited = set()
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     storage_dir = f"data/{urlparse(domain).netloc.replace('.', '_')}_{timestamp}/"
+    scrap_id = f"{urlparse(domain).netloc.replace('.', '_')}_{timestamp}"
     os.makedirs(storage_dir, exist_ok=True)
 
     csv_file = os.path.join(storage_dir, f"scraped_{timestamp}.csv")
-    html_file = os.path.join(storage_dir, f"scraped_{timestamp}.txt")
-    sitemap_file = os.path.join(storage_dir, f"sitemap.txt")
-    hash_file = os.path.join(storage_dir, f"hash_file.txt")
 
-    with open(csv_file, "w", newline="", encoding="utf-8") as csv_out, \
-         open(html_file, "w", encoding="utf-8") as html_out, \
-         open(sitemap_file, "w", encoding="utf-8") as sitemap_out:
-
+    with open(csv_file, "w", newline="", encoding="utf-8") as csv_out:
         writer = csv.writer(csv_out)
-        writer.writerow(["URL", "Content"])
+        writer.writerow(["ID", "URL", "Content"])
 
         while queue:
             url = queue.pop(0)
@@ -156,10 +177,10 @@ def crawl(domain, base_url, max_pages_per_url = None):
             if max_pages_per_url and len(visited) >= max_pages_per_url:
                 print(f"🔒 Osiągnięto limit przetworzonych stron ({max_pages_per_url}) na URL: {base_url}")
                 break
-            
+
             if url in visited:
                 continue
-            
+
             visited.add(url)
             print(f"🔍 Przetwarzanie: {url}")
 
@@ -170,46 +191,60 @@ def crawl(domain, base_url, max_pages_per_url = None):
                 continue
 
             # Czyszczenie treści
-            content, html_content = extract_main_content(soup, raw_html)
+            content = extract_main_content(soup)
 
-            # Zapisywanie wyników
-            send_to_rabbitmq(url, content)
-            writer.writerow([url, content])
-            html_out.write(f"URL: {url}\n{html_content}\n\n")
-            sitemap_out.write(url + "\n")
+            # Zapisywanie wyników TODO baza danych
+            send_to_rabbitmq(scrap_id, url)
+            writer.writerow([scrap_id, url, content])
             print(f"📄 Zapisano stronę: {url}")
 
             # Szukanie kolejnych podstron
             links_to_visit = []
             for link in soup.find_all("a", href=True):
                 full_url = urljoin(url, link["href"])
+                parsed_url = urlparse(full_url)
 
-                # Dodajemy tylko linki do tej samej domeny
-                if urlparse(full_url).netloc == urlparse(base_url).netloc and full_url not in visited:
-                    links_to_visit.append(full_url)
+                if parsed_url.netloc == urlparse(base_url).netloc and full_url not in visited:
+                    # Sprawdzamy czy link to plik PDF lub DOCX
+                    if any(full_url.lower().endswith(ext) for ext in ['.pdf', '.docx']):
+                        visited.add(full_url)
+                        print(f"📄 Znaleziono plik: {full_url}")
+                        # Otwieramy url pliku
+                        driver.get(full_url)
+                        file_text = extract_text_from_file(full_url)
+
+                        if file_text:
+                            # Można dodać zapisywanie lub wysyłanie do RabbitMQ
+                            send_to_rabbitmq(scrap_id, full_url)
+                            writer.writerow([scrap_id, full_url, file_text])
+                            print(f"📄 Zapisano plik: {full_url}")
+                        else:
+                            print(f"⚠️ Nie udało się odczytać pliku: {full_url}")
+                    else:
+                        # Pomiń pliki .doc
+                        if not full_url.lower().endswith('.doc'):
+                            links_to_visit.append(full_url)
 
             # Debugging: Sprawdzamy, czy są linki do odwiedzenia
-            if links_to_visit:
-                print(f"🔗 Zebrane linki do odwiedzenia: {links_to_visit}")
-            else:
-                print(f"🔗 Brak linków do odwiedzenia na stronie {url}")
+            # if links_to_visit:
+            #     print(f"🔗 Zebrane linki do odwiedzenia: {links_to_visit}")
+            # else:
+            #     print(f"🔗 Brak linków do odwiedzenia na stronie {url}")
 
             # Przetwarzanie linków na stronie (kliknięcie w linki)
             for next_url in links_to_visit:
                 if next_url not in visited:
-                    print(f"🔗 Dodawanie podstrony: {next_url}")
+                    # print(f"🔗 Dodawanie podstrony: {next_url}")
                     queue.append(next_url)
 
             time.sleep(1)  # Unikanie przeciążenia serwera
-            
-    # Oblicza i zapisuje hashe zawartości plików
-    create_hash_report(csv_file, html_file, hash_file)
+
 
 def main():
     """Główna funkcja uruchamiająca skrypt."""
     urls = [
         "http://quotes.toscrape.com/",
-        "http://quotes.toscrape.com/js"
+        "https://file-examples.com/index.php/sample-documents-download/sample-doc-download/"
     ]
     
     max_pages_per_url = 5  # Limit podstron, np. 15. Można ustawić na None, aby nie było limitu.

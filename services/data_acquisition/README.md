@@ -1,200 +1,92 @@
-# Skrypt Web Scraping
+# Skrypt do Web Scraping
 
-Ten skrypt służy do web scrapingu z użyciem Selenium oraz BeautifulSoup. Skrypt przeszukuje strony internetowe, zbiera treść z różnych podstron, a następnie zapisuje dane do plików CSV, HTML oraz tworzy plik TXT z adresami przetworzonych podstron. Dodatkowo, skrypt oblicza hash SHA-256 dla wygenerowanych plików i tworzy raport.
+Ten skrypt jest zaprojektowany do przeszukiwania stron internetowych, pobierania zawartości z określonych URL-i, oraz przetwarzania plików PDF i DOCX. Zawartość jest następnie wysyłana do kolejki RabbitMQ i zapisywana w pliku CSV. Cały proces może być zaplanowany do uruchamiania automatycznie co 24 godziny.
 
-## .env
-RABBITMQ_USER: ""
-RABBITMQ_PASS: ""
-RABBITMQ_HOST: ""
-RABBITMQ_QUEUE: ""
+## Wymagania
 
-## Instalacja
+Przed uruchomieniem skryptu upewnij się, że masz zainstalowane następujące zależności:
 
-Upewnij się, że masz zainstalowany Python w wersji 3.6 lub wyższej. Następnie uruchom poniższe polecenie, aby zainstalować zależności:
+1. **Zainstaluj zależności z pliku `requirements.txt`**:
+   - Stwórz wirtualne środowisko (opcjonalnie, ale zalecane):
+     ```bash
+     python -m venv venv
+     source venv/bin/activate  # Na systemach Linux lub macOS
+     venv\Scripts\activate     # Na Windows
+     ```
 
-```bash
-pip install -r requirements.txt
-```
+   - Zainstaluj wymagane biblioteki:
+     ```bash
+     pip install -r requirements.txt
+     ```
 
-Skrypt wymaga następujących pakietów:
+## Konfiguracja
 
-- `selenium`
-- `beautifulsoup4`
-- `requests`
-- `hashlib`
-- `time`
-- `os`
-- `csv`
-<<<<<<< HEAD
+### 1. Konfiguracja WebDrivera Selenium
+   - **Pobierz odpowiednią wersję ChromeDriver**:
+     - Upewnij się, że masz odpowiednią wersję ChromeDrivera, która pasuje do wersji Twojej przeglądarki Chrome. Pobierz go ze strony [ChromeDriver download](https://sites.google.com/chromium.org/driver/).
+     - Zaktualizuj ścieżkę do ChromeDrivera w skrypcie:
+       ```python
+       service = Service("/ścieżka/do/chromedrivera")
+       ```
+     - Upewnij się, że `chromedriver` jest dostępny globalnie lub podaj pełną ścieżkę w skrypcie.
 
-## Opis funkcji
+### 2. Konfiguracja katalogu pobierania
+   - Zmień katalog pobierania w skrypcie na odpowiednią ścieżkę na Twoim systemie:
+     ```python
+     download_dir = "ścieżka/do/katalogu/pobierania"
+     ```
+   - Jest to miejsce, w którym zostaną zapisane pobrane pliki (PDF, DOCX) przed ich przetworzeniem.
+   - Ścieżka musi być absolutna, relatwyna nie będzie działać.
 
-### 1. `get_soup_selenium(url)`
-=======
-- `json`
-- `pika`
-- `dotenv`
-- `schedule`
+### 3. Konfiguracja RabbitMQ
+   - Ustaw serwer RabbitMQ i skonfiguruj dane połączenia:
+     - Stwórz plik `.env` w głównym katalogu projektu i dodaj następujące zmienne:
+       ```env
+       RABBITMQ_HOST=adres_twojego_rabbitmq
+       RABBITMQ_QUEUE=nazwa_twojej_kolejki
+       RABBITMQ_USER=użytkownik_rabbitmq
+       RABBITMQ_PASS=hasło_rabbitmq
+       ```
 
-## Opis funkcji
+## Działanie skryptu
 
-### 1. `send_to_rabbitmq(url, text)`
-**Opis** Funkcja przesyła do kolejki rabbitMQ adresy URL i zawartość stron
+### Opis funkcji
 
-### 2. `get_soup_selenium(url)`
->>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
-**Opis**: Funkcja pobiera stronę internetową za pomocą Selenium, czekając na załadowanie wszystkich elementów strony, w tym tych dynamicznych ładowanych przez JavaScript. Zwraca obiekt `BeautifulSoup` oraz surowy HTML.
+#### 1. `extract_text_from_file(file_url)`
+   **Wejście**: URL pliku (PDF lub DOCX), który ma zostać pobrany i przetworzony.  
+   **Działanie**: Pobiera plik, czeka aż zostanie pobrany, a następnie wyciąga z niego tekst. Obsługiwane formaty to PDF i DOCX.  
+   **Wyjście**: Zawartość tekstowa pliku lub `None` w przypadku błędu.
 
-**Wejście**:
-- `url`: Adres URL strony do pobrania.
+#### 2. `send_to_rabbitmq(scrap_id, url)`
+   **Wejście**: `scrap_id` (unikalny identyfikator zbierania danych) i `url` (adres URL do wysłania).  
+   **Działanie**: Łączy się z RabbitMQ, wysyła dane do określonej kolejki.  
+   **Wyjście**: Brak. Funkcja nie zwraca wartości, ale wysyła dane do kolejki RabbitMQ.
 
-**Wyjście**:
-- `soup`: Obiekt `BeautifulSoup` z zawartością strony.
-- `raw_html`: Surowy HTML strony.
+#### 3. `get_soup_selenium(url)`
+   **Wejście**: `url` strony, którą chcemy pobrać.  
+   **Działanie**: Używa Selenium do załadowania strony, czekając na jej pełne załadowanie.  
+   **Wyjście**: Zwraca obiekt BeautifulSoup z przetworzonym HTML oraz surowy kod HTML.
 
-<<<<<<< HEAD
-### 2. `extract_main_content(soup, raw_html)`
-=======
-### 3. `extract_main_content(soup, raw_html)`
->>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
-**Opis**: Funkcja usuwa nagłówki, stopki, paski nawigacyjne, skrypty oraz inne zbędne elementy ze strony i jej surowego HTML-a. Zwraca oczyszczoną treść strony oraz oczyszczony HTML.
+#### 4. `extract_main_content(soup)`
+   **Wejście**: Obiekt BeautifulSoup, który zawiera całą stronę HTML.  
+   **Działanie**: Usuwa zbędne elementy strony takie jak nagłówki, stopki, paski nawigacyjne i inne.  
+   **Wyjście**: Zwraca oczyszczoną zawartość strony w postaci tekstu.
 
-**Wejście**:
-- `soup`: Obiekt `BeautifulSoup` zawierający stronę HTML.
-- `raw_html`: Surowy HTML strony.
+#### 5. `crawl(domain, base_url, max_pages_per_url)`
+   **Wejście**: `domain` (główna domena do przeszukiwania), `base_url` (pierwsza strona do skanowania), `max_pages_per_url` (opcjonalny limit stron do przetworzenia).  
+   **Działanie**: Rekurencyjnie przeszukuje strony w obrębie danej domeny, zbiera dane i zapisuje je w pliku CSV. Przetwarza pliki PDF i DOCX.  
+   **Wyjście**: Brak (dane są zapisywane w pliku CSV i wysyłane do RabbitMQ).
 
-**Wyjście**:
-- `content`: Oczyszczona treść strony.
-- `cleaned_raw_html`: Oczyszczony HTML strony.
+## Ogólny opis działania skryptu
 
-<<<<<<< HEAD
-### 3. `compute_file_hash(file_path)`
-=======
-### 4. `compute_file_hash(file_path)`
->>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
-**Opis**: Funkcja oblicza hash SHA-256 dla pliku wskazanego przez ścieżkę.
+Skrypt rozpoczyna działanie od zdefiniowania listy URL-i w funkcji `main()`. Następnie przetwarza te strony, wyciągając z nich tekst. Dodatkowo, gdy znajdzie linki do plików PDF lub DOCX (DOC są pomijane), próbuje je pobrać i przetworzyć. Dane są wysyłane do kolejki RabbitMQ i zapisywane w pliku CSV.
 
-**Wejście**:
-- `file_path`: Ścieżka do pliku, którego hash ma zostać obliczony.
+### Możliwość ustawienia limitu podstron
+Skrypt umożliwia ustawienie limitu przetworzonych podstron na każdej stronie (w zmiennej `max_pages_per_url`). Jeśli limit zostanie osiągnięty, skrypt zaprzestanie dalszego przetwarzania tego URL-a.
 
-**Wyjście**:
-- `file_hash`: Hash SHA-256 pliku.
-
-<<<<<<< HEAD
-### 4. `create_hash_report(csv_file, html_file, output_txt_file)`
-=======
-### 5. `create_hash_report(csv_file, html_file, output_txt_file)`
->>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
-**Opis**: Funkcja generuje raport w formacie tekstowym zawierający hashe plików CSV oraz HTML.
-
-**Wejście**:
-- `csv_file`: Ścieżka do pliku CSV.
-- `html_file`: Ścieżka do pliku HTML.
-- `output_txt_file`: Ścieżka do pliku, w którym zapisany zostanie raport hashy.
-
-**Wyjście**:
-- Zapisuje raport hashy do pliku tekstowego.
-
-<<<<<<< HEAD
-### 5. `crawl(domain, base_url, max_pages_per_url=None)`
-=======
-### 6. `crawl(domain, base_url, max_pages_per_url=None)`
->>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
-**Opis**: Funkcja do przeszukiwania domeny i zbierania danych z podstron. Funkcja pobiera strony, oczyszcza treść, zapisuje dane do plików CSV, HTML oraz mapy witryny. Działa rekurencyjnie, przetwarzając wszystkie dostępne podstrony.
-
-**Wejście**:
-- `domain`: Domena strony, która ma zostać przeszukana.
-- `base_url`: Podstawowy URL, od którego rozpoczyna się skanowanie.
-- `max_pages_per_url` (opcjonalnie): Limit liczby podstron do przetworzenia dla każdej domeny. Domyślnie brak limitu (None).
-
-**Wyjście**:
-- Zapisuje dane w plikach:
-  - `scraped_<timestamp>.csv`: Zawiera URL i oczyszczoną treść każdej strony.
-  - `scraped_<timestamp>.txt`: Zawiera surowy HTML każdej strony.
-  - `sitemap.txt`: Zawiera listę przetworzonych URL.
-  - `hash_file.txt`: Zawiera raport hashy dla plików CSV i HTML.
-
-<<<<<<< HEAD
-### 6. `main()`
-=======
-### 7. `main()`
->>>>>>> 5f2f32b (Dodanie kolejki rabbitmq do modułu zbierania danych.)
-**Opis**: Funkcja główna uruchamiająca skrypt. Uruchamia przetwarzanie dla listy podanych URL-i.
-
-**Wejście**:
-- `urls`: Lista URL-i do przetworzenia.
-- `max_pages_per_url`: Limit liczby podstron do przetworzenia.
-
-**Wyjście**:
-- Uruchamia proces crawlowania i zapisuje dane do odpowiednich plików.
-
-## Przykład użycia
-
-### Skrypt
-
-W pliku `main.py` można ustawić listę URL-i, które mają być przetworzone, oraz limit podstron.
-
+### Harmonogram (Schedule)
+Skrypt jest zaplanowany do uruchamiania co 24 godziny za pomocą biblioteki `schedule`. Możesz łatwo zmienić częstotliwość uruchamiania, modyfikując odpowiednią linijkę w kodzie:
 ```python
-def main():
-    """Główna funkcja uruchamiająca skrypt."""
-    urls = [
-        "http://quotes.toscrape.com/",
-        "http://quotes.toscrape.com/js"
-    ]
-    
-    max_pages_per_url = 5  # Limit podstron, np. 15. Można ustawić na None, aby nie było limitu.
-
-    for url in urls:
-        print(f"🌍 Skanuję: {url}")
-        crawl(url, url, max_pages_per_url)
-
-    driver.quit()
+schedule.every(24).hours.do(main)
 ```
 
-### Uruchomienie skryptu
-
-Aby uruchomić skrypt, po prostu uruchom plik Python:
-
-```bash
-python webscrapping.py
-```
-
-Skrypt przetworzy podane URL-e i zapisze wyniki do plików w folderze `data/`, tworząc podfoldery w zależności od daty i godziny uruchomienia.
-
-## Pliki wyjściowe
-
-Po zakończeniu przetwarzania skrypt tworzy następujące pliki:
-
-- **CSV**: `scraped_<timestamp>.csv`
-  - Zawiera kolumny: URL, Content (oczytana treść strony).
-  
-- **HTML**: `scraped_<timestamp>.txt`
-  - Zawiera pełny surowy HTML stron.
-  
-- **Mapa witryny**: `sitemap.txt`
-  - Zawiera listę URL-i przetworzonych podczas skanowania.
-  
-- **Raport hashy**: `hash_file.txt`
-  - Zawiera SHA-256 hashe dla plików CSV i HTML.
-
-## Ustawienia
-
-### `urls`:
-- Lista URL-i, które mają zostać przetworzone.
-
-### `max_pages_per_url`:
-- Ogranicza liczbę podstron do przetworzenia z danej domeny. Można ustawić na `None`, aby nie było limitu.
-
-### Przykład raportu hashy w `hash_file.txt`:
-
-```
-Plik: data/quotes_toscrape_com_20250330/scraped_20250330.csv
-Hash: d2d2d2a55c4a52e4eb2e28a7cd582c6a15d1b9da59302a512ef47ba1f34a4045
-
-Plik: data/quotes_toscrape_com_20250330/scraped_20250330.txt
-Hash: f1c1e0aaf343a82f8a87cc8c1ac6d85fc7393a274890d8f9837172dbba3d45d0
-```
-
-## Licencja
-
-Ten skrypt jest udostępniany na licencji MIT.
