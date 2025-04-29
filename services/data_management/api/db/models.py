@@ -19,7 +19,7 @@ class DocumentFullVersion(Base):
     document_full_version_id = Column(Integer, primary_key=True)
     document_id = Column(Integer, ForeignKey('document.document_id'), nullable=False)
     content = Column(Text, nullable=False)
-    aquisition_datetime = Column(DateTime, default=datetime.now)
+    acquisition_datetime = Column(DateTime, default=datetime.now)
 
     document = relationship('Document', back_populates='full_versions')
     diffs = relationship('DocumentDiff', back_populates='full_version')
