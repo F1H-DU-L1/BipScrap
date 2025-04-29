@@ -1,19 +1,14 @@
 from flask import Flask, request, jsonify
-import psycopg2
+from db.models import Base, Document, DocumentFullVersion
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 app = Flask(__name__)
 
-def get_connection():
-    return psycopg2.connect(
-        dbname="bip_indexing",
-        user="postgres",
-        password="postgres",
-        host="localhost"
-    )
+engine = create_engine('postgresql://postgres:postgres@localhost/bip_indexing')
+Session = sessionmaker(bind=engine)
 
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+Base.metadata.create_all(engine)
 
 @app.route('/uploadfulldoc', methods=['POST'])
 def upload_document():
@@ -24,33 +19,34 @@ def upload_document():
     if not source_url or not content:
         return jsonify({"error": "Missing source_url or content"}), 400
 
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            # Check if document already exists
-            cur.execute("SELECT id FROM documents WHERE source_url = %s", (source_url,))
-            result = cur.fetchone()
+    session = Session()
 
-            if result:
-                document_id = result[0]
-                cur.execute("SELECT MAX(version_number) FROM document_versions WHERE document_id = %s", (document_id,))
-                last_version = cur.fetchone()[0] or 0
-                version_number = last_version + 1
-            else:
-                cur.execute(
-                    "INSERT INTO documents (source_url, created_at) VALUES (%s,) RETURNING id",
-                    (source_url,)
-                )
-                document_id = cur.fetchone()[0]
-                version_number = 1
+    try:
+        # Search for URL
+        document = session.query(Document).filter_by(url=source_url).first()
 
-            cur.execute(
-                "INSERT INTO document_versions (document_id, version_number, content, created_at) VALUES (%s, %s, %s)",
-                (document_id, version_number, content)
-            )
+        if not document:
+            #if unique document source url then add new document
+            document = Document(url=source_url)
+            session.add(document)
+            session.flush()
+            
+        #always add new version
+        full_version = DocumentFullVersion(
+            document_id=document.document_id,
+            content=content
+        )
+        session.add(full_version)
+        session.commit()
 
-    return jsonify({"message": "Document saved"}), 200
+        return jsonify({"message": "Document saved"}), 200
 
-# @app.route("/uploadcomment")
-# def upload_comment():
-    
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
 
+    finally:
+        session.close()
+        
+if __name__ == "__main__":
+    app.run(debug=True)
