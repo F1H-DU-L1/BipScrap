@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
-from db.models import Base, Document, DocumentFullVersion
+from db.models import Base, DocumentFull , DocumentDiff , LLM
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -13,33 +14,31 @@ Base.metadata.create_all(engine)
 @app.route('/uploadfulldoc', methods=['POST'])
 def upload_document():
     data = request.get_json()
-    source_url = data.get("source_url")
-    content = data.get("content")
+    base_url = data.get("base_URL")
+    scrap_datetime_string = data.get("scrap_datetime")
+    url = data.get("URL")
+    content = data.get("Content")
 
-    if not source_url or not content:
-        return jsonify({"error": "Missing source_url or content"}), 400
+    if not(base_url and scrap_datetime_string and url and content):
+        return jsonify({"error": "Missing data"}), 400
 
     session = Session()
 
     try:
-        # Search for URL
-        document = session.query(Document).filter_by(url=source_url).first()
-
-        if not document:
-            #if unique document source url then add new document
-            document = Document(url=source_url)
-            session.add(document)
-            session.flush()
-            
-        #always add new version
-        full_version = DocumentFullVersion(
-            document_id=document.document_id,
-            content=content
+        try:
+            scrap_datetime_parsed = datetime.fromisoformat(scrap_datetime_string)
+        except ValueError:
+            return jsonify({"error": "Invalid datetime format. Use ISO 8601."}), 400
+        full_version = DocumentFull(
+            base_url = base_url,
+            scrap_datetime = scrap_datetime_parsed,
+            url = url,
+            content = content
         )
         session.add(full_version)
         session.commit()
 
-        return jsonify({"message": "Document saved"}), 200
+        return jsonify({"message": "Document saved successfully"}), 200
 
     except Exception as e:
         session.rollback()
