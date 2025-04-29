@@ -161,14 +161,13 @@ def crawl(domain, base_url, max_pages_per_url=None):
     visited = set()
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     storage_dir = f"data/{urlparse(domain).netloc.replace('.', '_')}_{timestamp}/"
-    scrap_id = f"{urlparse(domain).netloc.replace('.', '_')}_{timestamp}"
     os.makedirs(storage_dir, exist_ok=True)
 
     csv_file = os.path.join(storage_dir, f"scraped_{timestamp}.csv")
 
     with open(csv_file, "w", newline="", encoding="utf-8") as csv_out:
         writer = csv.writer(csv_out)
-        writer.writerow(["ID", "URL", "Content"])
+        writer.writerow(["Base_URL", "Timestamp", "URL", "Content"])
 
         while queue:
             url = queue.pop(0)
@@ -194,8 +193,8 @@ def crawl(domain, base_url, max_pages_per_url=None):
             content = extract_main_content(soup)
 
             # Zapisywanie wyników TODO baza danych
-            send_to_rabbitmq(scrap_id, url)
-            writer.writerow([scrap_id, url, content])
+            send_to_rabbitmq(url)
+            writer.writerow([base_url, timestamp, url, content])
             print(f"📄 Zapisano stronę: {url}")
 
             # Szukanie kolejnych podstron
@@ -215,8 +214,8 @@ def crawl(domain, base_url, max_pages_per_url=None):
 
                         if file_text:
                             # Można dodać zapisywanie lub wysyłanie do RabbitMQ
-                            send_to_rabbitmq(scrap_id, full_url)
-                            writer.writerow([scrap_id, full_url, file_text])
+                            send_to_rabbitmq(url)
+                            writer.writerow([base_url, timestamp, url, content])
                             print(f"📄 Zapisano plik: {full_url}")
                         else:
                             print(f"⚠️ Nie udało się odczytać pliku: {full_url}")

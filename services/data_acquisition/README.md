@@ -48,6 +48,25 @@ Przed uruchomieniem skryptu upewnij się, że masz zainstalowane następujące z
        RABBITMQ_PASS=hasło_rabbitmq
        ```
 
+### 4. Konfiguracja lokalna
+   - **Umożliwia oddzielenie modułu od reszty**
+   - Należy odkomentować linię 43 a zakomentować 42 (w przypadku najnowszej wersji Chrome):
+      ```python
+         #driver = webdriver.Chrome(service=service, options=chrome_options) # <- do uruchamiania w dockerze
+         driver = webdriver.Chrome(options=chrome_options) # <- do uruchamiania lokalnego
+      ```
+   - Należy wyłączyć scheduler (linia 263-265):
+       ```python
+         # while True:
+         #    schedule.run_pending()
+         #    time.sleep(1)
+      ```
+   - Należy skonfigurować folder pobierania i kolejkę zgodnie z punktami 2 i 3 (lub zakomentować wystąpienia funkcji wysyłającej do kolejki):
+      ```python
+         # send_to_rabbitmq(url)
+      ```
+   - Reszta konfiguracji pozostaje niezmienna.  
+
 ## Działanie skryptu
 
 ### Opis funkcji
