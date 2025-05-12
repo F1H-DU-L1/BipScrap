@@ -7,60 +7,41 @@ from datetime import datetime
 
 Base = declarative_base()
 
-class Document(Base):
-    __tablename__ = 'document'
-    document_id = Column(Integer, primary_key=True)
+class DocumentFull(Base):
+    __tablename__ = 'document_full'
+    doc_id = Column(Integer, primary_key=True)
+    base_url = Column(String, nullable=False)
+    scrap_datetime = Column(DateTime, default=datetime.now)
     url = Column(String, nullable=False)
-
-    full_versions = relationship('DocumentFullVersion', back_populates='document')
-
-class DocumentFullVersion(Base):
-    __tablename__ = 'document_full_version'
-    document_full_version_id = Column(Integer, primary_key=True)
-    document_id = Column(Integer, ForeignKey('document.document_id'), nullable=False)
     content = Column(Text, nullable=False)
-    acquisition_datetime = Column(DateTime, default=datetime.now)
 
-    document = relationship('Document', back_populates='full_versions')
-    diffs = relationship('DocumentDiff', back_populates='full_version')
-    summary = relationship('Summary', back_populates='full_version', uselist=False)
-    files = relationship('File', back_populates='full_version')
+    diffs_as_first = relationship('DocumentDiff', foreign_keys='DocumentDiff.doc_id_key_1', back_populates='doc1')
+    diffs_as_second = relationship('DocumentDiff', foreign_keys='DocumentDiff.doc_id_key_2', back_populates='doc2')
+
 
 class DocumentDiff(Base):
     __tablename__ = 'document_diff'
-    document_diff_id = Column(Integer, primary_key=True)
-    document_full_version_id = Column(Integer, ForeignKey('document_full_version.document_full_version_id'), nullable=False)
+    doc_diff_id = Column(Integer, primary_key=True)
+    doc_id_key_1 = Column(Integer, ForeignKey('document_full.doc_id'), nullable=False)
+    doc_id_key_2 = Column(Integer, ForeignKey('document_full.doc_id'), nullable=True)
     content = Column(Text, nullable=False)
-    datetime = Column(DateTime, default=datetime.now)
 
-    full_version = relationship('DocumentFullVersion', back_populates='diffs')
-    summary_diffs = relationship('SummaryDiff', back_populates='document_diff')
+    doc1 = relationship('DocumentFull', foreign_keys=[doc_id_key_1], back_populates='diffs_as_first')
+    doc2 = relationship('DocumentFull', foreign_keys=[doc_id_key_2], back_populates='diffs_as_second')
 
-class Summary(Base):
-    __tablename__ = 'summary'
-    summary_id = Column(Integer, primary_key=True)
-    document_full_version_id = Column(Integer, ForeignKey('document_full_version.document_full_version_id'), nullable=False)
+    llm_outputs = relationship('LLM', back_populates='diff')
+
+
+class LLM(Base):
+    __tablename__ = 'llm'
+    LLM_id = Column(Integer, primary_key=True)
+    doc_diff_id = Column(Integer, ForeignKey('document_diff.doc_diff_id'), nullable=False)
+    base_url = Column(String, nullable=False)
+    date_time = Column(DateTime, default=datetime.now)
     content = Column(Text, nullable=False)
-    datetime = Column(DateTime, default=datetime.now)
 
-    full_version = relationship('DocumentFullVersion', back_populates='summary')
-    summary_diffs = relationship('SummaryDiff', back_populates='summary')
-
-class SummaryDiff(Base):
-    __tablename__ = 'summary_diff'
-    summary_diff_id = Column(Integer, primary_key=True)
-    summary_id = Column(Integer, ForeignKey('summary.summary_id'), nullable=False)
-    document_diff_id = Column(Integer, ForeignKey('document_diff.document_diff_id'), nullable=False)
-
-    summary = relationship('Summary', back_populates='summary_diffs')
-    document_diff = relationship('DocumentDiff', back_populates='summary_diffs')
-
-class File(Base):
-    __tablename__ = 'file'
-    file_id = Column(Integer, primary_key=True)
-    document_full_version_id = Column(Integer, ForeignKey('document_full_version.document_full_version_id'), nullable=False)
-    blob = Column(LargeBinary, nullable=True)  # zakładam Text; możesz zmienić na LargeBinary jeśli potrzeba
-    url = Column(String, nullable=True)
-
-    full_version = relationship('DocumentFullVersion', back_populates='files')
+    diff = relationship('DocumentDiff', back_populates='llm_outputs')
+    
+    
+                        
 
