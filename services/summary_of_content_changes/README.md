@@ -3,11 +3,14 @@
 This project enables asynchronous summarization of long texts using LLM models (e.g., LLaMA 3, PLLuM) and RabbitMQ message queues for communication.
 
 ## .env
-RABBITMQ_HOST=rabbitmq
-RABBITMQ_USER=rabbit
-RABBITMQ_PASS=rabbit
-RABBITMQ_INPUT_QUEUE=t2t3
+
+RABBITMQ_HOST= ""
+RABBITMQ_INPUT_QUEUE= "t1t2"
+RABBITMQ_OUTPUT_QUEUE= ""
+RABBITMQ_USER= ""
+RABBITMQ_PASS= ""
 OLLAMA_HOST=ollama
+OLLAMA_MODEL="llama3.1:8b / llama3.2:latest / hf.co/mradermacher/PLLuM-8x7B-nc-instruct-GGUF:latest / hf.co/mradermacher/PLLuM-12B-nc-instruct-GGUF:latest"
 
 ## Installation
 
