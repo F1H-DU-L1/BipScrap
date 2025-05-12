@@ -13,3 +13,5 @@ Using venv:
 
 ## Developing
 - ```flask --app api run --debug```
+## .env
+DATABASE_URL=postgresql://user:password@db:5432/baza

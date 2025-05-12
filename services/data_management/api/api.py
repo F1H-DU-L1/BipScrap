@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from db.models import Base, DocumentFull , DocumentDiff , LLM
 from sqlalchemy import create_engine, select, desc
@@ -6,7 +7,8 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-engine = create_engine('postgresql://postgres:postgres@localhost/bip_indexing')
+DATABASE_URL = os.environ["DATABASE_URL"]
+engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 
 Base.metadata.create_all(engine)

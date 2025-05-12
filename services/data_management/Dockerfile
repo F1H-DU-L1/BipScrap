@@ -9,13 +9,14 @@ ENV FLASK_RUN_HOST=0.0.0.0
 WORKDIR /app
 
 # Copy requirements file
-COPY requirements.txt .
+COPY ./services/data_management/requirements.txt .
+#COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project files into the container
-COPY . .
+COPY ./services/data_management/ .
 
 # Expose the port on which Flask will run
 EXPOSE 5000

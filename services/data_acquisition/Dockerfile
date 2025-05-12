@@ -42,7 +42,7 @@ COPY services/data_acquisition/webscrapping.py .
 
 # Set environment variables
 ENV RABBITMQ_HOST=rabbitmq
-ENV RABBITMQ_QUEUE=data_queue
+ENV RABBITMQ_QUEUE=t1t2
 
 # Run application
 CMD ["wait-for-it.sh", "rabbitmq:5672", "--", "python", "webscrapping.py"]

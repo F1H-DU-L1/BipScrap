@@ -108,4 +108,3 @@ Skrypt jest zaplanowany do uruchamiania co 24 godziny za pomocą biblioteki `sch
 ```python
 schedule.every(24).hours.do(main)
 ```
-
