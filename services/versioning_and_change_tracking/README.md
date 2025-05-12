@@ -21,10 +21,10 @@ Ten serwis w Pythonie nasłuchuje wiadomości z kolejki RabbitMQ, porównuje now
 
 ```env
 RABBITMQ_HOST=rabbitmq
-RABBITMQ_USER=user
-RABBITMQ_PASS=password
-RABBITMQ_QUEUE=data_queue
-RABBITMQ_OUTPUT_QUEUE=processed_queue
+RABBITMQ_USER=rabbit
+RABBITMQ_PASS=rabbit
+RABBITMQ_QUEUE=t1t2
+RABBITMQ_OUTPUT_QUEUE=t2t3
 ```
 
 
