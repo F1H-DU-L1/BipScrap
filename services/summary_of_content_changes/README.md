@@ -8,6 +8,7 @@ RABBITMQ_INPUT_QUEUE= ""
 RABBITMQ_OUTPUT_QUEUE= ""
 RABBITMQ_USER= ""
 RABBITMQ_PASS= ""
+OLLAMA_MODEL="llama3.1:8b / llama3.2:latest / hf.co/mradermacher/PLLuM-8x7B-nc-instruct-GGUF:latest / hf.co/mradermacher/PLLuM-12B-nc-instruct-GGUF:latest"
 
 ## Installation
 
