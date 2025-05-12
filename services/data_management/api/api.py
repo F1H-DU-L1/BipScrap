@@ -78,5 +78,80 @@ def getdocs():
     finally:
         session.close()
 
+# Team 2: diff saving
+@app.route('/diff', methods=['POST'])
+def save_diff():
+    data = request.get_json()
+    doc_id_key_1 = data.get("doc_id_key_1")
+    doc_id_key_2 = data.get("doc_id_key_2")
+    content = data.get("content")
+    if not (doc_id_key_1 and doc_id_key_2):
+        return jsonify({"error":"Missing doc_id_key"}), 400
+    if not content:
+        return jsonify({"error":"Missing content"}), 400
+    
+    session = Session()
+    try:
+        diff = DocumentDiff(
+            doc_id_key_1=doc_id_key_1,
+            doc_id_key_2=doc_id_key_2,
+            content=content
+        )
+        session.add(diff)
+        session.commit()
+        return jsonify({"message": "Document saved successfully", "doc_diff_id": diff.doc_diff_id}), 200
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+# Team 3: diff getting
+@app.route('/diff/<int:doc_diff_id>', methods=['GET'])
+def get_diff(doc_diff_id):
+    if not doc_diff_id:
+        return jsonify({"error":"Missing doc_diff_id"}), 400
+    session = Session()
+    try:
+        query = (select(DocumentDiff.content)
+                 .where(DocumentDiff.doc_diff_id==doc_diff_id))
+        result = session.execute(query).scalars().all()
+        
+        if len(result) > 0:
+            return jsonify({"content": result[0]}), 200
+        else:
+            return jsonify({"error": "No diff found for this ID"}), 404
+        
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error":str(e)}), 500
+    
+    finally:
+        session.close()
+    
+# Team 3: LLM output saving
+@app.route('/summary/<int:doc_diff_id>', methods=['POST'])
+def save_summary(doc_diff_id):
+    data = request.get_json()
+    llm_summary = data.get("content")
+    if not llm_summary:
+        return jsonify({"error":"Missing content"}), 400
+    
+    session = Session()
+    try:
+        llm_output = LLM(
+            doc_diff_id=doc_diff_id,
+            content=llm_summary,
+            date_time=datetime.now()
+        )
+        session.add(llm_output)
+        session.commit()
+        return jsonify({"message": "LLM output saved successfully", "LLM_id": llm_output.LLM_id}), 200
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
 if __name__ == "__main__":
     app.run(debug=True)
