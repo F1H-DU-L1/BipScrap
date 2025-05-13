@@ -1,0 +1,53 @@
+CREATE TABLE document_diff (
+    doc_diff_id integer NOT NULL,
+    doc_id_key_1 integer NOT NULL,
+    doc_id_key_2 integer,
+    content text NOT NULL
+);
+
+
+
+INSERT INTO document_diff VALUES (8, 1, 6, 'PREZYDENT MIASTA RZESZOWA
+
+zarządzeniem podaje do publicznej wiadomości informację, iż w dniach od 5 do 18 maja 2025 r. zostaną przeprowadzone konsultacje społeczne do
+projektu zmian w Statutach Osiedli.');
+INSERT INTO public.document_diff VALUES (10, 2, 7, 'Ogłoszenie
+
+Prezydent Miasta Rzeszowa ogłasza nabór wniosków o udzielenie w 2025 roku dotacji celowej na dofinansowanie zadań związanych z rozwojem rodzinnych ogrodów działkowych ze środków budżetu Gminy Miasto Rzeszów.
+
+Wnioski o udzielenie dotacji celowej można składać w terminie od 15 kwietnia 2025 r. do 30 kwietnia 2025 r.  
+
+Stowarzyszenie ogrodowe, które prowadzi rodzinny ogród działkowy lub rodzinne ogrody działkowe, zwane dalej ROD, znajdujące się na terenie Gminy Miasto Rzeszów mogą uzyskać z budżetu Gminy Miasto Rzeszów dotację celową na dofinansowanie zadań związanych z ich rozwojem. Dotacja może być przeznaczona w szczególności na budowę lub modernizację infrastruktury ogrodowej. Realizacja zadania musi wpływać na poprawę warunków do korzystania z ROD przez działkowców lub zwiększać dostępność społeczności lokalnej do ROD.
+
+Wysokość dotacji celowej przewidziana w budżecie Gminy Miasto Rzeszów na 2025 r. wynosi 250 000,00 zł. Dotacja będzie udzielona w wysokości 50% poniesionych kosztów.
+
+Zasady, tryb postępowania i sposób rozliczenia dotacji udzielonej ROD określa „Regulamin udzielania dotacji celowej ze środków budżetu Gminy Miasto Rzeszów dla stowarzyszenia ogrodowego, które prowadzi rodzinny ogród działkowy lub rodzinne ogrody działkowe”, przyjęty uchwałą Nr VIII/148/2019 Rady Miasta Rzeszowa z dnia 26 lutego 2019 r.');
+INSERT INTO public.document_diff VALUES (11, 3, 8, 'pl
+
+
+Punkt Obsługi Mieszkańców w galerii handlowej „Nowy Świat” jest czynny przez 6 dni w tygodniu (poniedziałek - sobota) od 10. Punkt mieści się na I piętrze galerii. Płatności z tytułu wydania prawa jazdy lub dowodu rejestracyjnego mogą być dokonane w kasie każdego banku oraz kartą płatniczą w Punkcie Obsługi Mieszkańców (VISA, MasterCard, Blik). Kontakt z punktem w Galerii Handlowej Nowy Świat:
+35-111 Rzeszów, ul. Krakowska 20, poziom 1
+tel. nowyswiat@resman. pl
+
+
+Punkt Obsługi Mieszkańców w Centrum Kulturalno-Handlowym Millenium Hall jest czynny 6 dni w tygodniu (poniedziałek - sobota) od 10. Zlokalizowany jest na II piętrze. Kontakt z punktem w Centrum Kulturalno-Handlowym Millenium Hall:
+35-315 Rzeszów, al. Kopisto 1, poziom +2
+tel. millenium@resman.');
+INSERT INTO public.document_diff VALUES (13, 4, 9, 'Porządek obrad XXV sesji Rady Miasta - 29 kwietnia
+2025-04-15
+Zarządzenie Nr 362/2025 Prezydenta Miasta Rzeszowa z dnia 9 kwietnia 2025 r.');
+INSERT INTO public.document_diff VALUES (14, 5, 5, 'Gminna Ewidencja Zabytków Miasta Rzeszowa
+Biuro Miejskiego Konserwatora Zabytków
+ul. Targowa 1, 35-064 Rzeszów
+
+Podstawa prawna:
+Ustawa z dnia 23 lipca 2003 r. o ochronie zabytków i opiece nad zabytkami. Dane z ewidencji są dostępne na stronie: https://bip. pl/pl/261-biuro-miejskiego-konserwatora-zabytkow/4937-aktualny-wykaz-gminnej-ewidencji-zabytkow-miasta-rzeszowa. html#tresc
+
+Rejestr indywidualnych spraw konsumenckich
+Biuro Miejskiego Rzecznika Konsumentów
+ul. Baldachówka 8/9, 35-061 Rzeszów
+
+Podstawa prawna:
+Rozporządzenie Prezesa Rady Ministrów z dnia 18 stycznia 2011 r. w sprawie instrukcji kancelaryjnej, jednolitych rzeczowych wykazów akt oraz instrukcji w sprawie organizacji i zakresu działania archiwów zakładowych.');
+
+

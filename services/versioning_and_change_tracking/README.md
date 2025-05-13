@@ -1,13 +1,12 @@
 # 📨 Text Diff Processor with RabbitMQ
 
-Ten serwis w Pythonie nasłuchuje wiadomości z kolejki RabbitMQ, porównuje nowe teksty z poprzednimi wersjami i przesyła tylko **zmiany** (diffy) do innej kolejki.
+Ten serwis w Pythonie nasłuchuje wiadomości z kolejki RabbitMQ, porównuje nowe teksty z poprzednimi wersjami i przesyła **zmiany** (diffy) do bazy danych oraz wiadomość do kolejki.
 
 ## 📦 Funkcje
 
-- 📥 Odbiera dane (URL + tekst) z wejściowej kolejki RabbitMQ.
-- 🧠 Przechowuje ostatnią wersję tekstu (short_text) lokalnie (w `short_cache/`).
-- 🧾 Porównuje nową wersję z poprzednią i generuje **tylko różnice** (dodane linie).
-- 📤 Wysyła wynikowy diff jako JSON do wyjściowej kolejki.
+- 📥 Odbiera dane (URL) z wejściowej kolejki RabbitMQ.
+- 🧾 Porównuje nową wersję z poprzednią i generuje **tylko różnice**.
+- 📤 Wysyła wynikowy diff do bazy oraz wiadomość do kolejki.
 
 ---
 
@@ -32,13 +31,11 @@ Wiadomość wejściowa (data_queue)
 ```
 {
   "url": "http://example.com/page/1",
-  "text": "Pełny tekst strony..."
 }
 ```
 Wiadomość wyjściowa (processed_queue)
 ```
 {
-  "url": "http://example.com/page/1",
-  "diff": "Nowe dodane linie tekstu..."
+  "doc_diff_id": "2",
 }
 ```
