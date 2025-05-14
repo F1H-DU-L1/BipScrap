@@ -14,13 +14,13 @@ Session = sessionmaker(bind=engine)
 Base.metadata.create_all(engine)
 
 #Team 1 endpoint for upload
-@app.route('/uploadfulldoc', methods=['POST'])
+@app.route('/fulldoc', methods=['POST'])
 def upload_document():
     data = request.get_json()
-    base_url = data.get("base_URL")
+    base_url = data.get("base_url")
     scrap_datetime_string = data.get("scrap_datetime")
-    url = data.get("URL")
-    content = data.get("Content")
+    url = data.get("url")
+    content = data.get("content")
 
     if not(base_url and scrap_datetime_string and url and content):
         return jsonify({"error": "Missing data"}), 400
@@ -51,10 +51,11 @@ def upload_document():
         session.close()
 
 #Team 2 endpoint for getting the latest 2 docs
-@app.route('/getdocs', methods=['POST'])
+# todo return also doc_id_key
+@app.route('/docs', methods=['GET'])
 def getdocs():
     data = request.get_json()
-    docs_url = data.get("URL")
+    docs_url = data.get("url")
     if not docs_url:
         return jsonify({"error":"Missing url"}), 400
     
@@ -148,7 +149,7 @@ def save_summary(doc_diff_id):
         )
         session.add(llm_output)
         session.commit()
-        return jsonify({"message": "LLM output saved successfully", "LLM_id": llm_output.LLM_id}), 200
+        return jsonify({"message": "Summary saved successfully", "llm_id": llm_output.LLM_id}), 200
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
