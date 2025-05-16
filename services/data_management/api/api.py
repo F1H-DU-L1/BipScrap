@@ -61,16 +61,23 @@ def getdocs():
     
     session = Session()
     try:
-        query = (select(DocumentFull.content)
+        query = (select(DocumentFull.content, DocumentFull.doc_id)
                  .where(DocumentFull.url==docs_url)
                  .order_by(desc(DocumentFull.scrap_datetime))
                  .limit(2))
-        result = session.execute(query).scalars().all()
+        result = session.execute(query).mappings().all()
         
-        if len(result) > 1:
-            return jsonify({"Latest doc": result [0], "Second latest doc": result [1]}), 200
-        elif len(result) == 1:
-            return jsonify({"Latest doc": result [0], "Second latest doc": None}), 200
+        #prepare the list to be sent
+        documents = []
+        if result:
+            documents.append(result[0])
+            if len(result)>1:
+                documents.append(result[1])
+            else:
+                documents.append(None)
+            #if there are results send the docs
+            return jsonify({"documents": documents}), 200
+        #otherwise send error
         else:
             return jsonify({"error": "No docs matching this url yet"}), 404
         
