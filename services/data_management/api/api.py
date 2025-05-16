@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from db.models import Base, DocumentFull , DocumentDiff , LLM
 from sqlalchemy import create_engine, select, desc
@@ -6,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
 app = Flask(__name__)
+load_dotenv( )
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 engine = create_engine(DATABASE_URL)
@@ -70,9 +72,9 @@ def getdocs():
         #prepare the list to be sent
         documents = []
         if result:
-            documents.append(result[0])
+            documents.append(dict(result[0]))
             if len(result)>1:
-                documents.append(result[1])
+                documents.append(dict(result[1]))
             else:
                 documents.append(None)
             #if there are results send the docs
