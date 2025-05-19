@@ -55,7 +55,7 @@ def compare_documents(latest_doc, second_latest_doc):
 
     return ' '.join(new_sentences)
 
-def fetch_documents(url, doc_id_key_1, doc_id_key_2):
+def fetch_documents(url):
     payload = {"URL": url}
     response = requests.post(f"http://{DATA_MANAGEMENT_HOST}:{DATA_MANAGEMENT_PORT}/getdocs", json=payload)
 
@@ -63,7 +63,10 @@ def fetch_documents(url, doc_id_key_1, doc_id_key_2):
         docs = response.json()
         latest_doc = docs.get("Latest doc")
         second_latest_doc = docs.get("Second latest doc")
-
+        doc_id_key_1 = 1
+        doc_id_key_2 = 6
+        # doc_id_key_1 = docs.get("id1")
+        # doc_id_key_2 = docs.get("id2")
         if latest_doc and second_latest_doc:
             diff_result = compare_documents(latest_doc, second_latest_doc)
             if diff_result:
@@ -85,6 +88,7 @@ def fetch_documents(url, doc_id_key_1, doc_id_key_2):
                 "content": latest_doc
             }
             diff_response = requests.post(f"http://{DATA_MANAGEMENT_HOST}:{DATA_MANAGEMENT_PORT}/diff", json=diff_payload)
+            send_to_next_queue(doc_id_key_1)
             print("Wysłano różnice:", diff_response.json())
         else:
             print("Brakuje dokumentów.")
@@ -97,14 +101,9 @@ def callback(ch, method, properties, body):
         data = json.loads(body)
         url = data.get("url")
 
-        id1 = 1
-        id2 = 6
-        # id1 = data.get("id1")
-        # id2 = data.get("id2")
-        print(f"Odebrano z kolejki: url={url}, id1={id1}, id2={id2}")
-        fetch_documents(url, id1, id2)
+        print(f"Odebrano z kolejki: url={url}")
+        fetch_documents(url)
 
-        send_to_next_queue(id1)
 
     except Exception as e:
         print(f"Błąd przetwarzania wiadomości: {e}")
