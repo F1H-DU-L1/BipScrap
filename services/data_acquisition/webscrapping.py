@@ -55,6 +55,7 @@ RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
 DATABASE_URL = os.getenv("DATABASE_URL")
+MAX_PAGES = os.getenv("MAX_PAGES")
 
 def insert_to_db(base_url, timestamp, url, content):
 
@@ -252,7 +253,7 @@ def main():
     with open("./urls.txt", "r") as file:
         urls = [line.strip() for line in file if line.strip() != ""]
     
-    max_pages_per_url = 5  # Limit podstron, np. 15. Można ustawić na None, aby nie było limitu.
+    max_pages_per_url = MAX_PAGES  # Limit podstron, np. 15. Można ustawić na None, aby nie było limitu.
 
     for url in urls:
         print(f"🌍 Skanuję: {url}")

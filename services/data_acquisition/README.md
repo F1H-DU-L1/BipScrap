@@ -58,6 +58,7 @@ Przed uruchomieniem skryptu upewnij się, że masz zainstalowane następujące z
    | `RABBITMQ_USER`     | Username for RabbitMQ authentication           | `guest`                     |
    | `RABBITMQ_PASS`     | Password for RabbitMQ authentication           | `guest`                     |
    | `DATABASE_URL`      | Full connection string for PostgreSQL          | `postgresql://user:pass@host:5432/dbname` |
+   | `MAX_PAGES`         | Max scannable subpages                         | `postgresql://user:pass@host:5432/dbname` |
 
 ## Działanie skryptu
 
