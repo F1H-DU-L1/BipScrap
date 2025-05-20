@@ -9,13 +9,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
+import requests
+from selenium.webdriver.common.by import By
+
+import psycopg2
+from psycopg2 import sql
 
 import json
 import pika
 from dotenv import load_dotenv
 import schedule
 
-import requests
 from io import BytesIO
 from docx import Document
 from PyPDF2 import PdfReader
@@ -31,9 +35,10 @@ chrome_options.add_argument("--remote-debugging-port=9222")
 # Ustawienie ścieżki do ChromeDriver
 service = Service("/usr/local/bin/chromedriver")
 
+load_dotenv(override=True)
 # Ścieżka do folderu, w którym będą zapisywane pobrane pliki
 # UWAGA - zmienić dla właściwego środowiska
-download_dir = "E:\\Studia\\Semestr 8\\Projekty\\webscrapping\\BipScrap\\services\\data_acquisition\\files"
+download_dir = os.getenv("DIRECTORY_DIR")
 
 # Konfiguracja preferencji pobierania
 prefs = {'download.default_directory': download_dir }
@@ -45,15 +50,40 @@ driver = webdriver.Chrome(service=service, options=chrome_options) # <- do uruch
 VISITED = set()
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-load_dotenv(override=True)
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
 RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
 
-import time
-import requests
-from selenium.webdriver.common.by import By
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+DATABASE_URL = os.getenv("DATABASE_URL")
+result = urlparse(DATABASE_URL)
+DATABASE_HOST = result.hostname
+
+def insert_to_db(base_url, timestamp, url, content):
+    try:
+        conn = psycopg2.connect(
+            dbname=POSTGRES_DB,
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            host=DATABASE_HOST,
+            port="5432"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO document_full (base_URL, scrap_datetime, URL, Content)
+            VALUES (%s, %s, %s, %s)
+        """, (base_url, time.strptime(timestamp), url, content))
+
+        cursor.close()
+        conn.close()
+
+    except Exception as e:
+        print("Error:", e)
+
 
 def extract_text_from_file(file_url):
     """Pobiera plik (PDF, DOCX) i wyciąga z niego tekst. Czeka 10 sekund na pobranie pliku."""
@@ -103,7 +133,7 @@ def extract_text_from_file(file_url):
         return None
 
 
-def send_to_rabbitmq(scrap_id, url):
+def send_to_rabbitmq(base_url, timestamp, url):
     """Wysyła url i wyczyszczoną zawartość do kolejki rabbitmq"""
     # Connect
     credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
@@ -114,7 +144,7 @@ def send_to_rabbitmq(scrap_id, url):
     channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
 
     # Prepare message
-    message = json.dumps({"scrap_id": scrap_id, "url": url})
+    message = json.dumps({"base_url": base_url, "timestamp": timestamp, "url": url})
 
     # Send to queue
     channel.basic_publish(
@@ -160,91 +190,80 @@ def crawl(domain, base_url, max_pages_per_url=None):
     queue = [base_url]
     visited = set()
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    storage_dir = f"data/{urlparse(domain).netloc.replace('.', '_')}_{timestamp}/"
-    os.makedirs(storage_dir, exist_ok=True)
 
-    csv_file = os.path.join(storage_dir, f"scraped_{timestamp}.csv")
+    while queue:
+        url = queue.pop(0)
 
-    with open(csv_file, "w", newline="", encoding="utf-8") as csv_out:
-        writer = csv.writer(csv_out)
-        writer.writerow(["Base_URL", "Timestamp", "URL", "Content"])
+        # Jeżeli osiągnięto limit, przerywamy dalsze przetwarzanie tego URL
+        if max_pages_per_url and len(visited) >= max_pages_per_url:
+            print(f"🔒 Osiągnięto limit przetworzonych stron ({max_pages_per_url}) na URL: {base_url}")
+            break
 
-        while queue:
-            url = queue.pop(0)
+        if url in visited:
+            continue
 
-            # Jeżeli osiągnięto limit, przerywamy dalsze przetwarzanie tego URL
-            if max_pages_per_url and len(visited) >= max_pages_per_url:
-                print(f"🔒 Osiągnięto limit przetworzonych stron ({max_pages_per_url}) na URL: {base_url}")
-                break
+        visited.add(url)
+        print(f"🔍 Przetwarzanie: {url}")
 
-            if url in visited:
-                continue
+        # Pobieranie strony przy użyciu Selenium
+        soup, raw_html = get_soup_selenium(url)
+        if not soup or not raw_html:
+            print(f"❌ Błąd podczas przetwarzania strony {url}")
+            continue
 
-            visited.add(url)
-            print(f"🔍 Przetwarzanie: {url}")
+        # Czyszczenie treści
+        content = extract_main_content(soup)
 
-            # Pobieranie strony przy użyciu Selenium
-            soup, raw_html = get_soup_selenium(url)
-            if not soup or not raw_html:
-                print(f"❌ Błąd podczas przetwarzania strony {url}")
-                continue
+        # Zapisywanie wyników TODO baza danych
+        send_to_rabbitmq(base_url, timestamp, url)
+        insert_to_db(base_url, timestamp, url, content)
+        print(f"📄 Zapisano stronę: {url}")
 
-            # Czyszczenie treści
-            content = extract_main_content(soup)
+        # Szukanie kolejnych podstron
+        links_to_visit = []
+        for link in soup.find_all("a", href=True):
+            full_url = urljoin(url, link["href"])
+            parsed_url = urlparse(full_url)
 
-            # Zapisywanie wyników TODO baza danych
-            send_to_rabbitmq(url)
-            writer.writerow([base_url, timestamp, url, content])
-            print(f"📄 Zapisano stronę: {url}")
+            if parsed_url.netloc == urlparse(base_url).netloc and full_url not in visited:
+                # Sprawdzamy czy link to plik PDF lub DOCX
+                if any(full_url.lower().endswith(ext) for ext in ['.pdf', '.docx']):
+                    visited.add(full_url)
+                    print(f"📄 Znaleziono plik: {full_url}")
+                    # Otwieramy url pliku
+                    driver.get(full_url)
+                    file_text = extract_text_from_file(full_url)
 
-            # Szukanie kolejnych podstron
-            links_to_visit = []
-            for link in soup.find_all("a", href=True):
-                full_url = urljoin(url, link["href"])
-                parsed_url = urlparse(full_url)
-
-                if parsed_url.netloc == urlparse(base_url).netloc and full_url not in visited:
-                    # Sprawdzamy czy link to plik PDF lub DOCX
-                    if any(full_url.lower().endswith(ext) for ext in ['.pdf', '.docx']):
-                        visited.add(full_url)
-                        print(f"📄 Znaleziono plik: {full_url}")
-                        # Otwieramy url pliku
-                        driver.get(full_url)
-                        file_text = extract_text_from_file(full_url)
-
-                        if file_text:
-                            # Można dodać zapisywanie lub wysyłanie do RabbitMQ
-                            send_to_rabbitmq(url)
-                            writer.writerow([base_url, timestamp, url, content])
-                            print(f"📄 Zapisano plik: {full_url}")
-                        else:
-                            print(f"⚠️ Nie udało się odczytać pliku: {full_url}")
+                    if file_text:
+                        # Można dodać zapisywanie lub wysyłanie do RabbitMQ
+                        send_to_rabbitmq(base_url, timestamp, url)
+                        insert_to_db(base_url, timestamp, url, content)
+                        print(f"📄 Zapisano plik: {full_url}")
                     else:
-                        # Pomiń pliki .doc
-                        if not full_url.lower().endswith('.doc'):
-                            links_to_visit.append(full_url)
+                        print(f"⚠️ Nie udało się odczytać pliku: {full_url}")
+                else:
+                    # Pomiń pliki .doc
+                    if not full_url.lower().endswith('.doc'):
+                        links_to_visit.append(full_url)
 
-            # Debugging: Sprawdzamy, czy są linki do odwiedzenia
-            # if links_to_visit:
-            #     print(f"🔗 Zebrane linki do odwiedzenia: {links_to_visit}")
-            # else:
-            #     print(f"🔗 Brak linków do odwiedzenia na stronie {url}")
+        # Debugging: Sprawdzamy, czy są linki do odwiedzenia
+        # if links_to_visit:
+        #     print(f"🔗 Zebrane linki do odwiedzenia: {links_to_visit}")
+        # else:
+        #     print(f"🔗 Brak linków do odwiedzenia na stronie {url}")
 
-            # Przetwarzanie linków na stronie (kliknięcie w linki)
-            for next_url in links_to_visit:
-                if next_url not in visited:
-                    # print(f"🔗 Dodawanie podstrony: {next_url}")
-                    queue.append(next_url)
+        # Przetwarzanie linków na stronie (kliknięcie w linki)
+        for next_url in links_to_visit:
+            if next_url not in visited:
+                # print(f"🔗 Dodawanie podstrony: {next_url}")
+                queue.append(next_url)
 
-            time.sleep(1)  # Unikanie przeciążenia serwera
-
+        time.sleep(1)  # Unikanie przeciążenia serwera
 
 def main():
     """Główna funkcja uruchamiająca skrypt."""
-    urls = [
-        "http://quotes.toscrape.com/",
-        "https://file-examples.com/index.php/sample-documents-download/sample-doc-download/"
-    ]
+    with open("./data/urls.txt", "r") as file:
+        urls = [line.strip() for line in file if line.strip() != ""]
     
     max_pages_per_url = 5  # Limit podstron, np. 15. Można ustawić na None, aby nie było limitu.
 

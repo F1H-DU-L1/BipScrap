@@ -11,7 +11,7 @@ Przed uruchomieniem skryptu upewnij się, że masz zainstalowane następujące z
      ```bash
      python -m venv venv
      source venv/bin/activate  # Na systemach Linux lub macOS
-     venv\Scripts\activate     # Na Windows
+     venv\Scripts\Activate.ps1     # Na Windows
      ```
 
    - Zainstaluj wymagane biblioteki:
@@ -30,7 +30,7 @@ Przed uruchomieniem skryptu upewnij się, że masz zainstalowane następujące z
        ```
      - Upewnij się, że `chromedriver` jest dostępny globalnie lub podaj pełną ścieżkę w skrypcie.
 
-### 2. Konfiguracja katalogu pobierania
+### 2. Konfiguracja katalogu pobierania (.env)
    - Zmień katalog pobierania w skrypcie na odpowiednią ścieżkę na Twoim systemie:
      ```python
      download_dir = "ścieżka/do/katalogu/pobierania"
@@ -48,24 +48,19 @@ Przed uruchomieniem skryptu upewnij się, że masz zainstalowane następujące z
        RABBITMQ_PASS=hasło_rabbitmq
        ```
 
-### 4. Konfiguracja lokalna
-   - **Umożliwia oddzielenie modułu od reszty**
-   - Należy odkomentować linię 43 a zakomentować 42 (w przypadku najnowszej wersji Chrome):
-      ```python
-         #driver = webdriver.Chrome(service=service, options=chrome_options) # <- do uruchamiania w dockerze
-         driver = webdriver.Chrome(options=chrome_options) # <- do uruchamiania lokalnego
-      ```
-   - Należy wyłączyć scheduler (linia 263-265):
-       ```python
-         # while True:
-         #    schedule.run_pending()
-         #    time.sleep(1)
-      ```
-   - Należy skonfigurować folder pobierania i kolejkę zgodnie z punktami 2 i 3 (lub zakomentować wystąpienia funkcji wysyłającej do kolejki):
-      ```python
-         # send_to_rabbitmq(url)
-      ```
-   - Reszta konfiguracji pozostaje niezmienna.  
+### 4. Konfiguracja zmiennych środowiskowych
+   - Zmienne dotyczą folderu pobierania, RabbitMQ oraz danych dostępu do abzy danych:
+   | Variable Name      | Description                                   | Example                     |
+   |--------------------|-----------------------------------------------|-----------------------------|
+   | `DIRECTORY_DIR`     | Absolute directory path for downloads or file storage | `/home/user/downloads`       |
+   | `RABBITMQ_HOST`     | Hostname or IP address of RabbitMQ server     | `rabbitmq.local`             |
+   | `RABBITMQ_QUEUE`    | Name of the RabbitMQ queue to consume from    | `task_queue`                 |
+   | `RABBITMQ_USER`     | Username for RabbitMQ authentication           | `guest`                     |
+   | `RABBITMQ_PASS`     | Password for RabbitMQ authentication           | `guest`                     |
+   | `POSTGRES_USER`     | Username for PostgreSQL database                | `postgres`                  |
+   | `POSTGRES_PASSWORD` | Password for PostgreSQL database                | `password123`               |
+   | `POSTGRES_DB`       | Name of the PostgreSQL database                 | `bip_indexing`              |
+   | `DATABASE_URL`      | Full connection string for PostgreSQL          | `postgresql://user:pass@host:5432/dbname` |
 
 ## Działanie skryptu
 
@@ -93,12 +88,12 @@ Przed uruchomieniem skryptu upewnij się, że masz zainstalowane następujące z
 
 #### 5. `crawl(domain, base_url, max_pages_per_url)`
    **Wejście**: `domain` (główna domena do przeszukiwania), `base_url` (pierwsza strona do skanowania), `max_pages_per_url` (opcjonalny limit stron do przetworzenia).  
-   **Działanie**: Rekurencyjnie przeszukuje strony w obrębie danej domeny, zbiera dane i zapisuje je w pliku CSV. Przetwarza pliki PDF i DOCX.  
-   **Wyjście**: Brak (dane są zapisywane w pliku CSV i wysyłane do RabbitMQ).
+   **Działanie**: Rekurencyjnie przeszukuje strony w obrębie danej domeny, zbiera dane i zapisuje je w bazie danych. Przetwarza pliki PDF i DOCX.  
+   **Wyjście**: Brak (dane są zapisywane w bazie danych i wysyłane do RabbitMQ).
 
 ## Ogólny opis działania skryptu
 
-Skrypt rozpoczyna działanie od zdefiniowania listy URL-i w funkcji `main()`. Następnie przetwarza te strony, wyciągając z nich tekst. Dodatkowo, gdy znajdzie linki do plików PDF lub DOCX (DOC są pomijane), próbuje je pobrać i przetworzyć. Dane są wysyłane do kolejki RabbitMQ i zapisywane w pliku CSV.
+Skrypt rozpoczyna działanie od zdefiniowania listy URL-i w funkcji `main()`. Następnie przetwarza te strony, wyciągając z nich tekst. Dodatkowo, gdy znajdzie linki do plików PDF lub DOCX (DOC są pomijane), próbuje je pobrać i przetworzyć. Dane są wysyłane do kolejki RabbitMQ i zapisywane w bazie danych.
 
 ### Możliwość ustawienia limitu podstron
 Skrypt umożliwia ustawienie limitu przetworzonych podstron na każdej stronie (w zmiennej `max_pages_per_url`). Jeśli limit zostanie osiągnięty, skrypt zaprzestanie dalszego przetwarzania tego URL-a.

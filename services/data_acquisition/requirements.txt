@@ -21,4 +21,5 @@ trio==0.29.0
 trio-websocket==0.12.2
 urllib3==2.0.4
 wsproto==1.2.0
-
+psycopg2-binary
+dotenv
