@@ -262,7 +262,7 @@ def crawl(domain, base_url, max_pages_per_url=None):
 
 def main():
     """Główna funkcja uruchamiająca skrypt."""
-    with open("./data/urls.txt", "r") as file:
+    with open("./urls.txt", "r") as file:
         urls = [line.strip() for line in file if line.strip() != ""]
     
     max_pages_per_url = 5  # Limit podstron, np. 15. Można ustawić na None, aby nie było limitu.
