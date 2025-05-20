@@ -54,35 +54,22 @@ RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
 RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
-
-POSTGRES_USER = os.getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-POSTGRES_DB = os.getenv("POSTGRES_DB")
 DATABASE_URL = os.getenv("DATABASE_URL")
-result = urlparse(DATABASE_URL)
-DATABASE_HOST = result.hostname
 
 def insert_to_db(base_url, timestamp, url, content):
-    try:
-        conn = psycopg2.connect(
-            dbname=POSTGRES_DB,
-            user=POSTGRES_USER,
-            password=POSTGRES_PASSWORD,
-            host=DATABASE_HOST,
-            port="5432"
-        )
-        cursor = conn.cursor()
 
-        cursor.execute("""
-            INSERT INTO document_full (base_URL, scrap_datetime, URL, Content)
-            VALUES (%s, %s, %s, %s)
-        """, (base_url, time.strptime(timestamp), url, content))
+    data = {
+        "base_url": base_url,
+        "scrap_datetime": timestamp,
+        "url": url,
+        "content": content
+    }
+    response = requests.post(DATABASE_URL + "/fulldoc", json=data)
 
-        cursor.close()
-        conn.close()
-
-    except Exception as e:
-        print("Error:", e)
+    if response.status_code == 200:
+        print("Success:", response.json())
+    else:
+        print("Error:", response.status_code, response.text)
 
 
 def extract_text_from_file(file_url):

@@ -57,9 +57,6 @@ Przed uruchomieniem skryptu upewnij się, że masz zainstalowane następujące z
    | `RABBITMQ_QUEUE`    | Name of the RabbitMQ queue to consume from    | `task_queue`                 |
    | `RABBITMQ_USER`     | Username for RabbitMQ authentication           | `guest`                     |
    | `RABBITMQ_PASS`     | Password for RabbitMQ authentication           | `guest`                     |
-   | `POSTGRES_USER`     | Username for PostgreSQL database                | `postgres`                  |
-   | `POSTGRES_PASSWORD` | Password for PostgreSQL database                | `password123`               |
-   | `POSTGRES_DB`       | Name of the PostgreSQL database                 | `bip_indexing`              |
    | `DATABASE_URL`      | Full connection string for PostgreSQL          | `postgresql://user:pass@host:5432/dbname` |
 
 ## Działanie skryptu
