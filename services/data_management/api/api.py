@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from db.models import Base, DocumentFull , DocumentDiff , LLM
 from sqlalchemy import create_engine, select, desc
@@ -6,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
 app = Flask(__name__)
+load_dotenv( )
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 engine = create_engine(DATABASE_URL)
@@ -14,13 +16,13 @@ Session = sessionmaker(bind=engine)
 Base.metadata.create_all(engine)
 
 #Team 1 endpoint for upload
-@app.route('/uploadfulldoc', methods=['POST'])
+@app.route('/fulldoc', methods=['POST'])
 def upload_document():
     data = request.get_json()
-    base_url = data.get("base_URL")
+    base_url = data.get("base_url")
     scrap_datetime_string = data.get("scrap_datetime")
-    url = data.get("URL")
-    content = data.get("Content")
+    url = data.get("url")
+    content = data.get("content")
 
     if not(base_url and scrap_datetime_string and url and content):
         return jsonify({"error": "Missing data"}), 400
@@ -51,25 +53,33 @@ def upload_document():
         session.close()
 
 #Team 2 endpoint for getting the latest 2 docs
-@app.route('/getdocs', methods=['POST'])
+# todo return also doc_id_key
+@app.route('/docs', methods=['GET'])
 def getdocs():
     data = request.get_json()
-    docs_url = data.get("URL")
+    docs_url = data.get("url")
     if not docs_url:
         return jsonify({"error":"Missing url"}), 400
     
     session = Session()
     try:
-        query = (select(DocumentFull.content)
+        query = (select(DocumentFull.content, DocumentFull.doc_id)
                  .where(DocumentFull.url==docs_url)
                  .order_by(desc(DocumentFull.scrap_datetime))
                  .limit(2))
-        result = session.execute(query).scalars().all()
+        result = session.execute(query).mappings().all()
         
-        if len(result) > 1:
-            return jsonify({"Latest doc": result [0], "Second latest doc": result [1]}), 200
-        elif len(result) == 1:
-            return jsonify({"Latest doc": result [0], "Second latest doc": None}), 200
+        #prepare the list to be sent
+        documents = []
+        if result:
+            documents.append(dict(result[0]))
+            if len(result)>1:
+                documents.append(dict(result[1]))
+            else:
+                documents.append(None)
+            #if there are results send the docs
+            return jsonify({"documents": documents}), 200
+        #otherwise send error
         else:
             return jsonify({"error": "No docs matching this url yet"}), 404
         
@@ -148,7 +158,7 @@ def save_summary(doc_diff_id):
         )
         session.add(llm_output)
         session.commit()
-        return jsonify({"message": "LLM output saved successfully", "LLM_id": llm_output.LLM_id}), 200
+        return jsonify({"message": "Summary saved successfully", "llm_id": llm_output.LLM_id}), 200
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
