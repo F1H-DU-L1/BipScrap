@@ -13,7 +13,7 @@ RABBITMQ_INPUT_QUEUE = os.getenv("RABBITMQ_INPUT_QUEUE")
 RABBITMQ_OUTPUT_QUEUE = os.getenv("RABBITMQ_OUTPUT_QUEUE")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
-PUBLISH_TO_OUTPUT_QUEUE = os.getenv("PUBLISH_TO_OUTPUT_QUEUE", 'False').lower() in ('true', '1', 't')
+PUBLISH_TO_OUTPUT_QUEUE = os.getenv("PUBLISH_TO_OUTPUT_QUEUE", "false").lower() == "true"
 
 # RabbitMQ connection parameters
 credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)

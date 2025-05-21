@@ -33,6 +33,12 @@ OLLAMA_HOST=ollama
 # Ollama model, available models listed in the `Supported Models` section
 OLLAMA_MODEL="llama3.1:8b"
 
+# Character limit after which the content is split into fragments. It’s best to set this to 50% of the model's context size. The default value of 3072 should yield correct results.
+FRAGMENT_SIZE="3072"
+
+# Whether to display the LLM output in real-time as it is being generated.
+SHOW_STREAM="false"
+
 # Prompt used for summarizing a single document fragment
 FRAGMENT_SUMMARY_PROMPT="Jesteś asystentem, który potrafi czytać długie dokumenty i przygotowywać streszczenia w akapitach."
 
@@ -43,7 +49,7 @@ FINAL_SUMMARY_PROMPT= "Jesteś asystentem, który potrafi czytać długie dokume
 DATA_MANAGEMENT_BASE_URL="http://data_management:5000"
 
 # Sends llm_id to the output queue; enable if there is a downstream microservice
-PUBLISH_TO_OUTPUT_QUEUE=false
+PUBLISH_TO_OUTPUT_QUEUE="false"
 ```
 
 ## Supported Models
