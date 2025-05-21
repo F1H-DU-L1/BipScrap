@@ -33,6 +33,12 @@ OLLAMA_HOST=ollama
 # Ollama model, available models listed in the `Supported Models` section
 OLLAMA_MODEL="llama3.1:8b"
 
+# Prompt used for summarizing a single document fragment
+FRAGMENT_SUMMARY_PROMPT="Jesteś asystentem, który potrafi czytać długie dokumenty i przygotowywać streszczenia w akapitach."
+
+# Prompt used for merging multiple fragment summaries into a cohesive summary
+FINAL_SUMMARY_PROMPT= "Jesteś asystentem, który potrafi czytać długie dokumenty, podzielone na mniejsze fragmenty i przygotowywać podsumowanie, które jest napisane spójnie."
+
 # API address of the database
 DATA_MANAGEMENT_BASE_URL="http://data_management:5000"
 
