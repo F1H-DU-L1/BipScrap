@@ -18,18 +18,19 @@ def get_diff(doc_diff_id: int) -> str | None:
         return None
 
 
-def save_summary(doc_diff_id: int, summary: str) -> bool:
+def save_summary(doc_diff_id: int, summary: str) -> tuple[int | None, bool]:
     if not doc_diff_id:
-        return False
+        return None, False
 
     if not summary:
-        return False
+        return None, False
 
     payload = {"content": summary}
 
     response = requests.post(f"{BASE_URL}/summary/{doc_diff_id}", json=payload)
 
     if response.status_code == 200:
-        return True
+        llm_id = response.json().get('llm_id')
+        return llm_id, True
     else:
-        return False
+        return None, False
