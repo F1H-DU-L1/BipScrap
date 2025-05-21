@@ -4,6 +4,7 @@ This project enables asynchronous summarization of long texts using LLM models (
 
 ## .env
 
+```
 RABBITMQ_HOST= ""
 RABBITMQ_INPUT_QUEUE= "t1t2"
 RABBITMQ_OUTPUT_QUEUE= ""
@@ -11,6 +12,8 @@ RABBITMQ_USER= ""
 RABBITMQ_PASS= ""
 OLLAMA_HOST=ollama
 OLLAMA_MODEL="llama3.1:8b / llama3.2:latest / hf.co/mradermacher/PLLuM-8x7B-nc-instruct-GGUF:latest / hf.co/mradermacher/PLLuM-12B-nc-instruct-GGUF:latest"
+DATA_MANAGEMENT_BASE_URL="http://data_management:5000"
+```
 
 ## Installation
 
