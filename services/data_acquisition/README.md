@@ -60,6 +60,17 @@ Przed uruchomieniem skryptu upewnij się, że masz zainstalowane następujące z
    | `DATABASE_URL`      | Full connection string for PostgreSQL          | `postgresql://user:pass@host:5432/dbname` |
    | `MAX_PAGES`         | Max scannable subpages                         | `postgresql://user:pass@host:5432/dbname` |
 
+### .env
+```.env
+DIRECTORY_DIR=/app/data
+RABBITMQ_HOST=rabbitmq
+RABBITMQ_QUEUE=t1t2
+RABBITMQ_USER=admin
+RABBITMQ_PASS=admin
+DATA_MANAGEMENT_HOST=data_management
+DATA_MANAGEMENT_PORT=5000
+```
+
 ## Działanie skryptu
 
 ### Opis funkcji

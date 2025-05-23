@@ -50,11 +50,10 @@ Dla każdej unikalnej strony (każdego URL) należy przewidzieć oddzielny rekor
 Kolejne wersje dla danego URL można zapisać jako różnice (diffy) w dedykowanym polu, aby efektywnie porównywać i aktualizować dane. W pierwszej iteracji można też rozważyć zapisywanie całości w kolejnym rekordzie z odpowiednią informacją o czasie/wersji, która pozwoli na analizę różnic.
 
 ```.env
-RABBITMQ_DEFAULT_USER: ""
-RABBITMQ_DEFAULT_PASS: ""
+RABBITMQ_DEFAULT_USER=admin
+RABBITMQ_DEFAULT_PASS=admin
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=bip_indexing
-DATABASE_URL=postgresql://user:password@db:5432/baza
 ```
 

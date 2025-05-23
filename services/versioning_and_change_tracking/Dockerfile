@@ -27,4 +27,4 @@ ENV RABBITMQ_USER=user
 ENV RABBITMQ_PASS=password
 
 # Uruchomienie aplikacji po sprawdzeniu, że RabbitMQ działa
-CMD ["wait-for-it.sh", "rabbitmq:5672", "--", "python", "versioning.py"]
+CMD ["wait-for-it.sh", "rabbitmq:5672", "-t", "30", "--", "python", "versioning.py"]

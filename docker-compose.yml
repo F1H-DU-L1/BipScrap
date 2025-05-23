@@ -22,6 +22,18 @@ services:
       - 15672:15672
     env_file:
       - .env
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
   ollama:
     image: ollama/ollama
     container_name: ollama
@@ -40,8 +52,8 @@ services:
     depends_on:
       - rabbitmq
       - db
-#    env_file:
-#      - services/data_acquisition/.env
+    env_file:
+      - services/data_acquisition/.env
 
   summary_llm:
     build:

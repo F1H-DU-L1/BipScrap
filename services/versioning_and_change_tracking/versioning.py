@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import pika
 import requests
@@ -7,16 +8,13 @@ import socket
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
-RABBITMQ_HOST = "rabbitmq"
-RABBITMQ_QUEUE = "quotes"
-RABBITMQ_USER = "quest"
-RABBITMQ_PASS = "quest"
-NEXT_QUEUE = "next_queue"
-
-RABBITMQ_INPUT_QUEUE = "quotes"
-RABBITMQ_OUTPUT_QUEUE = "processed_queue"
-DATA_MANAGEMENT_HOST = "data_management"
-DATA_MANAGEMENT_PORT = 5000
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
+RABBITMQ_USER = os.getenv("RABBITMQ_USER")
+RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
+RABBITMQ_INPUT_QUEUE = os.getenv("RABBITMQ_INPUT_QUEUE")
+RABBITMQ_OUTPUT_QUEUE = os.getenv("RABBITMQ_OUTPUT_QUEUE")
+DATA_MANAGEMENT_HOST = os.getenv("DATA_MANAGEMENT_HOST")
+DATA_MANAGEMENT_PORT = os.getenv("DATA_MANAGEMENT_PORT")
 
 def wait_for_service(host, port, timeout=60):
     print(f"Czekam na serwis {host}:{port} ...")
@@ -56,8 +54,8 @@ def compare_documents(latest_doc, second_latest_doc):
     return ' '.join(new_sentences)
 
 def fetch_documents(url):
-    payload = {"URL": url}
-    response = requests.post(f"http://{DATA_MANAGEMENT_HOST}:{DATA_MANAGEMENT_PORT}/getdocs", json=payload)
+    payload = {"url": url}
+    response = requests.get(f"http://{DATA_MANAGEMENT_HOST}:{DATA_MANAGEMENT_PORT}/docs", json=payload)
 
     if response.status_code == 200:
         docs = response.json()
@@ -77,6 +75,7 @@ def fetch_documents(url):
                     "content": diff_result
                 }
                 diff_response = requests.post(f"http://{DATA_MANAGEMENT_HOST}:{DATA_MANAGEMENT_PORT}/diff", json=diff_payload)
+                send_to_next_queue(doc_id_key_1)
                 print("Wysłano różnice:", diff_response.json())
 
             else:
@@ -116,7 +115,7 @@ def send_to_next_queue(doc_id_key):
         )
     )
     channel = connection.channel()
-    next_queue = NEXT_QUEUE
+    next_queue = RABBITMQ_OUTPUT_QUEUE
     channel.queue_declare(queue=next_queue, durable=True)
     channel.basic_publish(exchange='', routing_key=next_queue, body=str(doc_id_key))
     connection.close()
@@ -135,10 +134,10 @@ def consume_queue():
                 )
             )
             channel = connection.channel()
-            channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
-            channel.queue_declare(queue=NEXT_QUEUE, durable=True)
+            channel.queue_declare(queue=RABBITMQ_INPUT_QUEUE, durable=True)
+            channel.queue_declare(queue=RABBITMQ_OUTPUT_QUEUE, durable=True)
 
-            channel.basic_consume(queue=RABBITMQ_QUEUE, on_message_callback=callback, auto_ack=True)
+            channel.basic_consume(queue=RABBITMQ_INPUT_QUEUE, on_message_callback=callback, auto_ack=True)
             print("Czekam na wiadomości...")
             channel.start_consuming()
         except pika.exceptions.AMQPConnectionError as e:
