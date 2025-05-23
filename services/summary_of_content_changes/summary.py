@@ -11,6 +11,8 @@ SHOW_STREAM = os.getenv("SHOW_STREAM", "false").lower() == "true"
 OLLAMA_HOST = os.getenv("OLLAMA_HOST")
 FRAGMENT_SIZE = int(os.getenv("FRAGMENT_SIZE", "3072"))
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
+FRAGMENT_SUMMARY_PROMPT = os.getenv("FRAGMENT_SUMMARY_PROMPT", "create summary")
+FINAL_SUMMARY_PROMPT = os.getenv("FINAL_SUMMARY_PROMPT", "create summary")
 
 # Initialize the client using the constant host URL
 client = ollama.Client(host=OLLAMA_HOST)
@@ -91,7 +93,7 @@ def create_summary(content: str) -> str:
         messages=[
             {
                 "role": "system",
-                "content": "Jesteś asystentem, który potrafi czytać długie dokumenty i przygotowywać streszczenia akapitach",
+                "content": FRAGMENT_SUMMARY_PROMPT,
             },
             {"role": "user", "content": content},
         ],
@@ -130,8 +132,7 @@ def create_final_summary(summaries: list[str]) -> str:
         messages=[
             {
                 "role": "system",
-                "content": "Jesteś asystentem, który potrafi czytać długie dokumenty, które są podzielone na "
-                "mniejsze fragmenty i przygotowywać podsumowanie, które to jest napisany spójnie.",
+                "content": FINAL_SUMMARY_PROMPT,
             },
             {"role": "user", "content": "\n".join(summaries)},
         ],

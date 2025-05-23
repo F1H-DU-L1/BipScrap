@@ -1,10 +1,11 @@
 import pika
 import os
-import string
 import threading
 
 from dotenv import load_dotenv
 from summary import summarize_text
+from api import get_diff, save_summary
+from diff_parser import parse_diff_id
 
 load_dotenv(override=True)
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
@@ -12,6 +13,7 @@ RABBITMQ_INPUT_QUEUE = os.getenv("RABBITMQ_INPUT_QUEUE")
 RABBITMQ_OUTPUT_QUEUE = os.getenv("RABBITMQ_OUTPUT_QUEUE")
 RABBITMQ_USER = os.getenv("RABBITMQ_USER")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
+PUBLISH_TO_OUTPUT_QUEUE = os.getenv("PUBLISH_TO_OUTPUT_QUEUE", "false").lower() == "true"
 
 # RabbitMQ connection parameters
 credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
@@ -19,25 +21,61 @@ connection_params = pika.ConnectionParameters(
     host=RABBITMQ_HOST, credentials=credentials
 )
 
-def process_message(body, channel, delivery_tag):
+def publish_llm_id(llm_id: int):
+    connection = pika.BlockingConnection(connection_params)
+    channel = connection.channel()
+
+    # Ensure the output queue exists
+    channel.queue_declare(queue=RABBITMQ_OUTPUT_QUEUE, durable=True)
+
+    # Publish the summary to the output queue
+    channel.basic_publish(
+        exchange="",
+        routing_key=RABBITMQ_OUTPUT_QUEUE,
+        body=str(llm_id),
+        properties=pika.BasicProperties(delivery_mode=2),  # make message persistent
+    )
+    connection.close()
+
+def process_message(message, doc_diff_id, channel, delivery_tag):
     # Processing by the LLM (may take a few minutes)
-    summary = summarize_text(body.decode())
+    summary = summarize_text(message)
     print(f"Summary: {summary}", flush=True)
 
-    # Publishing the summary to the output queue
-    publish_summary(summary)
-
+    # Publishing the summary to the api
+    llm_id, is_successful = save_summary(doc_diff_id, summary)
+    if not is_successful:
+        print(f"Failed to save summary for diff ID {doc_diff_id}. Skipping.", flush=True)
+        
     # Acknowledgment (ack) of message receipt
     channel.basic_ack(delivery_tag=delivery_tag)
+
+    # Publish llm_id to rabbit queue
+    if PUBLISH_TO_OUTPUT_QUEUE:
+        publish_llm_id(llm_id)
 
 
 def on_data(ch, method, properties, body):
     # This function is called whenever a message is received.
     print(f"Received message: {body.decode()}", flush=True)
 
+    diff_id = parse_diff_id(body)
+    if diff_id is None:
+        print("Invalid message: diff_id must be a numeric string. Skipping.", flush=True)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        return
+    
+    diff = get_diff(diff_id)
+    if diff is None:
+        print(f"No diff found for ID {diff_id} or other internal problem. Skipping message.", flush=True)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        return
+
+    print(f"Fetched diff content for ID {diff_id}: {diff[:100]}...", flush=True)
+
     # Starting the function that processes the message in a separate thread
     worker = threading.Thread(
-        target=process_message, args=(body, ch, method.delivery_tag)
+        target=process_message, args=(diff, diff_id, ch, method.delivery_tag)
     )
     worker.start()
 
@@ -45,27 +83,6 @@ def on_data(ch, method, properties, body):
     while worker.is_alive():
         worker.join(timeout=1)
         ch.connection.process_data_events(time_limit=0.1)
-
-
-def publish_summary(summary_text: str):
-    connection = pika.BlockingConnection(connection_params)
-    channel = connection.channel()
-
-    # Ensure the output queue exists
-    channel.queue_declare(queue=RABBITMQ_OUTPUT_QUEUE, durable=True)
-
-    # Clean the summary text to remove unwanted characters
-    # cleaned_summary = clean_text(summary_text)
-    cleaned_summary = summary_text
-
-    # Publish the summary to the output queue
-    channel.basic_publish(
-        exchange="",
-        routing_key=RABBITMQ_OUTPUT_QUEUE,
-        body=cleaned_summary,
-        properties=pika.BasicProperties(delivery_mode=2),  # make message persistent
-    )
-    connection.close()
 
 
 def wait_for_data():
