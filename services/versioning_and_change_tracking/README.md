@@ -22,8 +22,10 @@ Ten serwis w Pythonie nasłuchuje wiadomości z kolejki RabbitMQ, porównuje now
 RABBITMQ_HOST=rabbitmq
 RABBITMQ_USER=admin
 RABBITMQ_PASS=admin
-RABBITMQ_QUEUE=t1t2
+RABBITMQ_INPUT_QUEUE=t1t2
 RABBITMQ_OUTPUT_QUEUE=t2t3
+DATA_MANAGEMENT_HOST=data_management
+DATA_MANAGEMENT_PORT=5000
 ```
 
 
