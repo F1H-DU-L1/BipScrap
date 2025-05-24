@@ -73,8 +73,10 @@ def insert_to_db(base_url, timestamp, url, content):
 
     if response.status_code == 200:
         print("Success:", response.json())
+        return True
     else:
         print("Error:", response.status_code, response.text)
+        return False
 
 
 def extract_text_from_file(file_url):
@@ -208,9 +210,12 @@ def crawl(domain, base_url, max_pages_per_url=None):
 
         # Zapisywanie wyników TODO baza danych
 
-        insert_to_db(base_url, timestamp, url, content)
-        send_to_rabbitmq(base_url, timestamp, url)
-        print(f"📄 Zapisano stronę: {url}")
+        insert_db_success = insert_to_db(base_url, timestamp, url, content)
+        if insert_db_success:
+            send_to_rabbitmq(base_url, timestamp, url)
+            print(f"📄 Zapisano stronę: {url}")
+        else:
+            print(f"Błąd zapisu strony {url}")
 
         # Szukanie kolejnych podstron
         links_to_visit = []
