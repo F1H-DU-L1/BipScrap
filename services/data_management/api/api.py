@@ -153,7 +153,7 @@ def save_summary(doc_diff_id):
     try:
         llm_output = LLM(
             doc_diff_id=doc_diff_id,
-            base_url=obatin_base_url(doc_diff_id),
+            base_url=obatin_base_url(session, doc_diff_id),
             content=llm_summary,
             date_time=datetime.now()
         )
@@ -166,11 +166,10 @@ def save_summary(doc_diff_id):
     finally:
         session.close()
 
-def obatin_base_url(doc_diff_id: str) -> str:
+def obatin_base_url(session, doc_diff_id: str) -> str:
     """
     Function to obtain the base URL from the full document
     """
-    session = Session()
     try:
         query = (select(DocumentFull.base_url)
                     .join(DocumentDiff, DocumentFull.doc_id==DocumentDiff.doc_id_key_1)
@@ -186,9 +185,6 @@ def obatin_base_url(doc_diff_id: str) -> str:
     except Exception as e:
         session.rollback()
         return ""
-    
-    finally:
-        session.close()
 
 if __name__ == "__main__":
     app.run(debug=True)
