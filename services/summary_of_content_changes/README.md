@@ -13,19 +13,19 @@ This project processes provided documents into summaries using an LLM.
 ## .env
 ```
 # RabbitMQ server address
-RABBITMQ_HOST=""
+RABBITMQ_HOST=rabbitmq
 
 # Input queue
-RABBITMQ_INPUT_QUEUE="t3in"
+RABBITMQ_INPUT_QUEUE=t2t3
 
-# Output queue 
-RABBITMQ_OUTPUT_QUEUE="t3out"
+# Output queue
+RABBITMQ_OUTPUT_QUEUE=t3out
 
 # RabbitMQ user
-RABBITMQ_USER="guest"
+RABBITMQ_USER=admin
 
 # RabbitMQ password
-RABBITMQ_PASS="guest"
+RABBITMQ_PASS=admin
 
 # Ollama server address
 OLLAMA_HOST=ollama
@@ -49,7 +49,7 @@ FINAL_SUMMARY_PROMPT= "Jesteś asystentem, który potrafi czytać długie dokume
 DATA_MANAGEMENT_BASE_URL="http://data_management:5000"
 
 # Sends llm_id to the output queue; enable if there is a downstream microservice
-PUBLISH_TO_OUTPUT_QUEUE="false"
+PUBLISH_TO_OUTPUT_QUEUE="true"
 ```
 
 ## Supported Models

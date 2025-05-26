@@ -38,11 +38,8 @@ COPY services/data_acquisition/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app code
-COPY services/data_acquisition/webscrapping.py .
+COPY services/data_acquisition/ .
 
-# Set environment variables
-ENV RABBITMQ_HOST=rabbitmq
-ENV RABBITMQ_QUEUE=t1t2
 
 # Run application
-CMD ["wait-for-it.sh", "rabbitmq:5672", "--", "python", "webscrapping.py"]
+CMD ["wait-for-it.sh", "rabbitmq:5672", "-t", "30", "--", "python", "webscrapping.py"]

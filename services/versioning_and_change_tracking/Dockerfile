@@ -21,10 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY services/versioning_and_change_tracking/versioning.py .
 
 # Zmienne środowiskowe domyślne (mogą być nadpisane przez `.env`)
-ENV RABBITMQ_HOST=rabbitmq
-ENV RABBITMQ_QUEUE=data_queue
-ENV RABBITMQ_USER=user
-ENV RABBITMQ_PASS=password
+
 
 # Uruchomienie aplikacji po sprawdzeniu, że RabbitMQ działa
-CMD ["wait-for-it.sh", "rabbitmq:5672", "--", "python", "versioning.py"]
+CMD ["wait-for-it.sh", "rabbitmq:5672", "-t", "30", "--", "python", "versioning.py"]

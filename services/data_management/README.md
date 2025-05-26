@@ -14,8 +14,9 @@ Using venv:
 ## Developing
 - ```flask --app api run --debug```
 ## .env
-DATABASE_URL=postgresql://user:password@db:5432/baza
-
+```.env
+DATABASE_URL=postgresql://postgres:postgres@db:5432/bip_indexing
+```
 ## Endpoints
 
 ### Team 1
