@@ -48,7 +48,7 @@ def process_message(message, doc_diff_id, channel, delivery_tag):
         print(f"Failed to save summary for diff ID {doc_diff_id}. Skipping.", flush=True)
         
     # Acknowledgment (ack) of message receipt
-    channel.basic_ack(delivery_tag=delivery_tag)
+    #channel.basic_ack(delivery_tag=delivery_tag)
 
     # Publish llm_id to rabbit queue
     if PUBLISH_TO_OUTPUT_QUEUE:
@@ -62,13 +62,13 @@ def on_data(ch, method, properties, body):
     diff_id = parse_diff_id(body)
     if diff_id is None:
         print("Invalid message: diff_id must be a numeric string. Skipping.", flush=True)
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        #ch.basic_ack(delivery_tag=method.delivery_tag)
         return
     
     diff = get_diff(diff_id)
     if diff is None:
         print(f"No diff found for ID {diff_id} or other internal problem. Skipping message.", flush=True)
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        #ch.basic_ack(delivery_tag=method.delivery_tag)
         return
 
     print(f"Fetched diff content for ID {diff_id}: {diff[:100]}...", flush=True)
@@ -106,7 +106,7 @@ def wait_for_data():
     # 'auto_ack=True' means that messages will be acknowledged automatically upon receipt.
     # If set to False, you will need to manually acknowledge messages after processing them.
     channel.basic_consume(
-        queue=RABBITMQ_INPUT_QUEUE, on_message_callback=on_data, auto_ack=False
+        queue=RABBITMQ_INPUT_QUEUE, on_message_callback=on_data, auto_ack=True
     )
 
     print("Waiting for messages. To exit press CTRL+C", flush=True)
